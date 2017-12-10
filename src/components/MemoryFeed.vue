@@ -1,27 +1,31 @@
 <template>
   <div id="parent-feed" class="parent-feed">
     <div class="clear-fix">
-      <h1>MemoryFeed</h1>
-      <hr/>
+      <div class="title">
+        <h1>MemoryFeed</h1>
+        <hr/>
+      </div>
       <!--{{ memory.reviewedTimes }} / 6-->
       <!--内容:{{ memory.content }}-->
       <!--<p>追加した日にち: {{ memory.addedDate }}</p>-->
       <div class="child-feed" v-for="memory in memoryList">
         <el-card class="box-card">
-          <p>
+          <span>
             追加した日：{{ memory.addedDate }}
-          </p>
-          <p>
             復習回数：{{ memory.reviewedTimes }}
+          </span>
+          <p>
+            {{ memory.content }}
           </p>
           <p>
-            コンテンツ：{{ memory.content }}
+            タグ
           </p>
           <p>
-            タグ：{{ memory.tag }}
+            {{ memory.tag }}
           </p>
           <button v-bind:click="review">復習</button>
           <button v-bind:click="finishReview">復習終了</button>
+          <button v-bind:click="edit">編集</button>
         </el-card>
       </div>
     </div>
@@ -41,16 +45,18 @@
       }
     },
     methods: {
-      review() {
+      review () {
         this.memoryList.memory.reviewedTimes += 1
         this.memoryList.memory.isToBeReviewedFlag = false
         this.memoryList.memory.isReviewFinishedFlag = false
       },
-      finishReview() {
+      finishReview () {
         this.memoryList.memory.isReviewFinishedFlag = true
+      },
+      edit () {
       }
     },
-    created() {
+    created () {
       let self = this
       axios.get('https://memory-manager-dd40d.firebaseio.com/posts.json').then(data => {
         console.log(data)
@@ -62,8 +68,12 @@
 
 
 <style scoped>
+  .title {
+    margin-right: auto;
+    margin-left: auto;
+  }
   .parent-feed {
-    width: 400px;
+    /*width: 400px;*/
     display: inline-block;
   }
 
@@ -75,6 +85,7 @@
   @import url("//unpkg.com/element-ui@2.0.7/lib/theme-chalk/index.css");
   .text {
     font-size: 14px;
+    width: 100px;
   }
 
   .item {
@@ -83,8 +94,13 @@
 
   .clearfix:before,
   .clearfix:after {
-    display: table;
+    display: inline-block;
     content: "";
+  }
+  .clearfix {
+    margin-left: auto;
+    margin-right: auto;
+    width: 400px;
   }
 
   .clearfix:after {

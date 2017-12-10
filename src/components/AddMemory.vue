@@ -1,23 +1,31 @@
 <template>
-  <div id="single-blog">
-    メモの追加
-    {{ memory.reviewedTimes }} / 6
-    <input type="text" v-model="memory.content" required/>
-    <p>
-      タグ:<input type="text" v-model="memory.tag"/>
-    </p>
-    <ul>
-      <li v-for="tag in memory.tags">{{ tag }}</li>
-    </ul>
-    <button v-on:click.prevent="post">追加する</button>
+  <div class="add-memory">
+    <div class="add-button">
+      <button>追加する</button>
+    </div>
+    <div class="add-form">
+      <el-card class="box-card">
+        メモの追加
+        {{ memory.reviewedTimes }} / 6
+        <input type="text" v-model="memory.content" required/>
+        <p>
+          タグ:<input type="text" v-model="memory.tag"/>
+        </p>
+        <ul>
+          <li v-for="tag in memory.tags">{{ tag }}</li>
+        </ul>
+        <button v-on:click.prevent="post">追加する</button>
+      </el-card>
+    </div>
   </div>
 </template>
 
 <script>
   import axios from 'axios'
+
   export default {
     name: '',
-    data () {
+    data() {
       return {
         memory: {
           reviewedTimes: 0,
@@ -48,21 +56,47 @@
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
-  h1, h2 {
-    font-weight: normal;
+  @import url("//unpkg.com/element-ui@2.0.7/lib/theme-chalk/index.css");
+
+  .add-memory {
   }
 
-  ul {
-    list-style-type: none;
-    padding: 0;
+  .add-form {
+    display: none;
   }
 
-  li {
+  .add-button {
+
+  }
+
+  .text {
+    font-size: 14px;
+    width: 100px;
+  }
+
+  .item {
+    margin-bottom: 18px;
+  }
+
+  .clearfix:before,
+  .clearfix:after {
     display: inline-block;
-    margin: 0 10px;
+    content: "";
   }
 
-  a {
-    color: #42b983;
+  .clearfix {
+    margin-left: auto;
+    margin-right: auto;
+    width: 400px;
   }
+
+  .clearfix:after {
+    clear: both
+  }
+
+  .box-card {
+    width: 580px;
+    display: inline-block;
+  }
+
 </style>
