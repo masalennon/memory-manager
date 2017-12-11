@@ -3,9 +3,9 @@
 </template>
 
 <script>
-    export default {
-        name: "edit-memory"
-    }
+  export default {
+    name: 'edit-memory'
+  }
 </script>
 
 <style scoped>

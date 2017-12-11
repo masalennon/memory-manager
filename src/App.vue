@@ -1,20 +1,24 @@
 <template>
   <div id="app">
-    <memory-feed></memory-feed>
-    <add-memory></add-memory>
-
+    <div class="parent-feed">
+      <memory-header></memory-header>
+      <add-memory></add-memory>
+      <memory-feed></memory-feed>
+    </div>
   </div>
 </template>
 
 <script>
   import AddMemory from './components/AddMemory.vue'
   import MemoryFeed from './components/MemoryFeed.vue'
+  import MemoryHeader from './components/MemoryHeader.vue'
 
   export default {
     name: 'app',
     components: {
       'addMemory': AddMemory,
-      'memoryFeed': MemoryFeed
+      'memoryFeed': MemoryFeed,
+      'memory-header': MemoryHeader
     }
   }
 </script>
@@ -27,5 +31,10 @@
     text-align: center;
     color: #2c3e50;
     margin-top: 60px;
+  }
+
+  .parent-feed {
+    width: 700px;
+    display: inline-block;
   }
 </style>

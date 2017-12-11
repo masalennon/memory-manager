@@ -1,20 +1,23 @@
 <template>
   <div class="add-memory">
-    <div class="add-button">
-      <button>追加する</button>
+    <div class="add-button" v-if="isDisplayed">
+      <button @click="displayAddForm">閉じる</button>
     </div>
-    <div class="add-form">
-      <el-card class="box-card">
+    <div class="add-button" v-else>
+      <button @click="displayAddForm">追加する</button>
+    </div>
+    <div v-if="isDisplayed">
+      <el-card class="box-card add-form">
         メモの追加
         {{ memory.reviewedTimes }} / 6
-        <input type="text" v-model="memory.content" required/>
+        <textarea type="text" v-model="memory.content" required/>
         <p>
           タグ:<input type="text" v-model="memory.tag"/>
         </p>
         <ul>
           <li v-for="tag in memory.tags">{{ tag }}</li>
         </ul>
-        <button v-on:click.prevent="post">追加する</button>
+        <button @click.prevent="post">追加する</button>
       </el-card>
     </div>
   </div>
@@ -34,7 +37,8 @@
           tag: [],
           isToBeReviewedFlag: true,
           isReviewFinishedFlag: false
-        }
+        },
+        isDisplayed: true // これを上のmemoryの中に入れていたら動かなかった。それは当然だ！上に入れていたら、それにアクセスするならmemory.isDisplayedにしないとダメだ。
       }
     },
     computed: {},
@@ -49,6 +53,10 @@
           console.log(data)
           this.submitted = true
         })
+      },
+      displayAddForm: function () {
+        this.isDisplayed = !this.isDisplayed // ここ= isDisplayedにしていたら怒られてたけど、今思えば当たり前だ。isDisplayedはローカル変数になるししかもそれはこのメソッドでは定義されていない。
+        console.log(this.isDisplayed)
       }
     }
   }
@@ -62,7 +70,7 @@
   }
 
   .add-form {
-    display: none;
+    background: lightblue;
   }
 
   .add-button {

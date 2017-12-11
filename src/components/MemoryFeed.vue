@@ -1,18 +1,15 @@
 <template>
   <div id="parent-feed" class="parent-feed">
     <div class="clear-fix">
-      <div class="title">
-        <h1>MemoryFeed</h1>
-        <hr/>
-      </div>
       <!--{{ memory.reviewedTimes }} / 6-->
       <!--内容:{{ memory.content }}-->
-      <!--<p>追加した日にち: {{ memory.addedDate }}</p>-->
       <div class="child-feed" v-for="memory in memoryList">
-        <el-card class="box-card">
+        <el-card class="box-card" v-if="memory.isToBeReviewedFlag">
           <span>
-            追加した日：{{ memory.addedDate }}
-            復習回数：{{ memory.reviewedTimes }}
+            {{ memory.addedDate }}〜
+          </span>
+          <span>
+            {{ memory.reviewedTimes }}回目
           </span>
           <p>
             {{ memory.content }}
@@ -39,22 +36,27 @@
 
   export default {
     name: '',
-    data() {
+    data () {
       return {
-        memoryList: []
+        memoryList: [],
+        isDisplayed: true
       }
     },
     methods: {
       review () {
         this.memoryList.memory.reviewedTimes += 1
-        this.memoryList.memory.isToBeReviewedFlag = false
+        this.memoryList.memory.isToBeReviewedFlag = true
         this.memoryList.memory.isReviewFinishedFlag = false
       },
       finishReview () {
         this.memoryList.memory.isReviewFinishedFlag = true
       },
       edit () {
+      },
+      displayAddForm: function () {
+        this.isDisplayed = !this.isDisplayed
       }
+
     },
     created () {
       let self = this
@@ -68,10 +70,6 @@
 
 
 <style scoped>
-  .title {
-    margin-right: auto;
-    margin-left: auto;
-  }
   .parent-feed {
     /*width: 400px;*/
     display: inline-block;
