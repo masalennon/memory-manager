@@ -20,9 +20,9 @@
           <p>
             {{ memory.tag }}
           </p>
-          <button v-bind:click="review">復習</button>
-          <button v-bind:click="finishReview">復習終了</button>
-          <button v-bind:click="edit">編集</button>
+          <button @click="review">復習</button>
+          <button @click="finishReview">復習終了</button>
+          <button @click="edit">編集</button>
         </el-card>
       </div>
     </div>
@@ -42,11 +42,13 @@
         isDisplayed: true
       }
     },
-    methods: {
+    methods: { // メソッドの中のスコープがどうなっているのかわからない。
       review () {
-        this.memoryList.memory.reviewedTimes += 1
+        console.log(this.memoryList.memory.isReviewFinishedFlag)
+        this.memoryList.memory.reviewedTimes += 1  // thisのスコープはexport defaultの中。なしだと、reviewの中になる。
         this.memoryList.memory.isToBeReviewedFlag = true
         this.memoryList.memory.isReviewFinishedFlag = false
+        console.log(this.memoryList.memory.isReviewFinishedFlag)
       },
       finishReview () {
         this.memoryList.memory.isReviewFinishedFlag = true
@@ -56,13 +58,19 @@
       displayAddForm: function () {
         this.isDisplayed = !this.isDisplayed
       }
-
     },
     created () {
-      let self = this
       axios.get('https://memory-manager-dd40d.firebaseio.com/posts.json').then(data => {
         console.log(data)
-        self.memoryList = data.data
+        // this.memoryList = data.data これだとオブジェクトなので、配列として扱えない。なのでslice(), reverse()が使えなかった。
+        // 配列にするために、Object.values(data.data)を使っている。
+
+        this.memoryList = Object.values(data.data)
+        this.keys = Object.keys()
+        console.log(this.memoryList)
+        // let keyss = Object.keys(this.memoryList)
+        // console.log(keyss[0])
+        this.memoryList = this.memoryList.slice().reverse()
       })
     }
   }
