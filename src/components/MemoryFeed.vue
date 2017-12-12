@@ -66,8 +66,8 @@
         // 配列にするために、Object.values(data.data)を使っている。
 
         this.memoryList = Object.values(data.data)
-        this.keys = Object.keys()
-        console.log(this.memoryList)
+        // this.keys = Object.keys()
+        // console.log(this.memoryList)
         // let keyss = Object.keys(this.memoryList)
         // console.log(keyss[0])
         this.memoryList = this.memoryList.slice().reverse()
