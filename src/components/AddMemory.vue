@@ -1,26 +1,26 @@
 <template>
   <div>
     <div class="add-memory">
-      <div class="add-button" v-if="isDisplayed">
-        <button @click="displayAddForm">閉じる</button>
-      </div>
-      <div class="add-button" v-else>
-        <button @click="displayAddForm">追加する</button>
-      </div>
-      <div v-if="isDisplayed">
-        <el-card class="box-card add-form">
-          メモの追加
-          {{ memory.reviewedTimes }} / 6
-          <textarea type="text" v-model="memory.content" required/>
-          <p>
-            タグ:<input type="text" v-model="memory.tag"/>
-          </p>
-          <ul>
-            <li v-for="tag in memory.tags">{{ tag }}</li>
-          </ul>
-          <button @click.prevent="post">追加する</button>
-        </el-card>
-      </div>
+        <div class="add-button" v-if="isDisplayed">
+          <button @click="displayAddForm">閉じる</button>
+        </div>
+        <div class="add-button" v-else>
+          <button @click="displayAddForm">追加する</button>
+        </div>
+        <div v-if="isDisplayed">
+          <el-card class="box-card add-form">
+            メモの追加
+            {{ memory.reviewedTimes }} / 6
+            <textarea type="text" v-model="memory.content" required/>
+            <p>
+              タグ:<input type="text" v-model="memory.tag" v-on:keyup.enter="post"/>
+            </p>
+            <ul v-for="memory in memoryList">
+              <li>{{ memory.tag }}</li>
+            </ul>
+            <button @click.prevent="post">追加する</button>
+          </el-card>
+        </div>
     </div>
 
     <div id="parent-feed" class="parent-feed">
@@ -44,7 +44,7 @@
             <p>
               {{ memory.tag }}
             </p>
-            <button @click="review">復習</button>
+            <button @click="review(memory)">復習</button>
             <button @click="finishReview">復習終了</button>
             <button @click="edit">編集</button>
           </el-card>
@@ -74,7 +74,7 @@
         },
         memoryList: [],
         submitted: false,
-        isDisplayed: true // これを上のmemoryの中に入れていたら動かなかった。それは当然だ！上に入れていたら、それにアクセスするならmemory.isDisplayedにしないとダメだ。
+        isDisplayed: false // これを上のmemoryの中に入れていたら動かなかった。それは当然だ！上に入れていたら、それにアクセスするならmemory.isDisplayedにしないとダメだ。
       }
     },
     computed: {},
@@ -87,7 +87,7 @@
         })
       }
     },
-    created () {
+    created() {
       axios.get('https://memory-manager-dd40d.firebaseio.com/posts.json').then(data => {
         console.log(data)
         // this.memoryList = data.data これだとオブジェクトなので、配列として扱えない。なのでslice(), reverse()が使えなかった。
@@ -114,18 +114,21 @@
           self.submitted = true
           self.memory.content = ''
           self.memory.tag = ''
+          self.isDisplayed = false
         })
       },
       displayAddForm: function () {
         this.isDisplayed = !this.isDisplayed // ここ= isDisplayedにしていたら怒られてたけど、今思えば当たり前だ。isDisplayedはローカル変数になるししかもそれはこのメソッドでは定義されていない。
         console.log(this.isDisplayed)
       },
-      review() {
-        console.log(this.memoryList.memory.isReviewFinishedFlag)
-        this.memoryList.memory.reviewedTimes += 1  // thisのスコープはexport defaultの中。なしだと、reviewの中になる。
-        this.memoryList.memory.isToBeReviewedFlag = true
-        this.memoryList.memory.isReviewFinishedFlag = false
-        console.log(this.memoryList.memory.isReviewFinishedFlag)
+      review(memory) {
+        // console.log(memory.isReviewFinishedFlag)
+        axios.put('https://memory-manager-dd40d.firebaseio.com/put.json/-L0NgqG0zsUXmj3iuZY4', this.memory).then(function (data) {
+          memory.reviewedTimes += 1  // thisのスコープはexport defaultの中。なしだと、reviewの中になる。
+          memory.isToBeReviewedFlag = true
+          memory.isReviewFinishedFlag = false
+          console.log(memory.isReviewFinishedFlag)
+        })
       },
       finishReview() {
         this.memoryList.memory.isReviewFinishedFlag = true
@@ -141,14 +144,22 @@
   @import url("//unpkg.com/element-ui@2.0.7/lib/theme-chalk/index.css");
 
   .add-memory {
+    position: fixed;
+    width: 300px;
+    left: 50px;
   }
 
   .add-form {
     background: lightblue;
+    left: 50px;
+    margin-top: 25px;
+    /*margin-right: auto;*/
   }
 
   .add-button {
-
+    /*left: 500px;*/
+    position: fixed;
+    left: 580px;
   }
 
   .text {
