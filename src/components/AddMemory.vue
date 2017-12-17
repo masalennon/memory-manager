@@ -30,7 +30,9 @@
       <div class="clear-fix">
         <!--{{ memory.reviewedTimes }} / 6-->
         <!--内容:{{ memory.content }}-->
-        <div class="child-feed" v-for="memory in memoryList">
+        <div class="child-feed" v-for="memory in memoryList" v-if="memory.isToBeReviewedFlag">
+
+
           <el-card class="box-card">
           <span>
             {{ memory.addedDate }}〜
@@ -143,7 +145,7 @@
       },
       review (memory) {
         memory.reviewedTimes += 1  // thisのスコープはexport defaultの中。なしだと、reviewの中になる。
-        memory.isToBeReviewedFlag = true
+        memory.isToBeReviewedFlag = false
         memory.isReviewFinishedFlag = false
         //  postする場所はパス構造になっている。
         axios.put('https://memory-manager-dd40d.firebaseio.com/posts/' + memory.key + '.json', memory).then(function (data) {
