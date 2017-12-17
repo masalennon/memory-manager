@@ -1,26 +1,29 @@
 <template>
   <div>
     <div class="add-memory">
-        <div class="add-button" v-if="isDisplayed">
-          <button @click="displayAddForm">閉じる</button>
-        </div>
-        <div class="add-button" v-else>
-          <button @click="displayAddForm">追加する</button>
-        </div>
-        <div v-if="isDisplayed">
-          <el-card class="box-card add-form">
-            メモの追加
-            {{ memory.reviewedTimes }} / 6
-            <textarea type="text" v-model="memory.content" required/>
-            <p>
-              タグ:<input type="text" v-model="memory.tag" v-on:keyup.enter="post"/>
-            </p>
-            <ul v-for="memory in memoryList">
-              <li>{{ memory.tag }}</li>
-            </ul>
-            <button @click.prevent="post">追加する</button>
-          </el-card>
-        </div>
+      <div class="add-button" v-if="isDisplayed">
+        <button @click="displayAddForm">閉じる</button>
+      </div>
+      <div class="add-button" v-else>
+        <button @click="displayAddForm">追加する</button>
+      </div>
+      <div v-if="isDisplayed">
+        <el-card class="box-card add-form">
+          メモの追加
+          {{ memory.reviewedTimes }} / 6
+          <textarea type="text" v-model="memory.content" required/>
+
+          <div class="tag-wrapper">
+            タグ:<input type="text" id="tag" v-on:keyup.enter="post"/>
+          </div>
+          <!--↑v-modelをつけるとボタンを押した瞬間に一瞬だけ文字が入ってその後すぐ消えてしまう。-->
+
+          <ul v-for="memory in memoryList" class="tags">
+            <button @click.prevent="addTag(memory.tag)">{{ memory.tag }}</button>
+          </ul>
+          <button @click.prevent="post">追加する</button>
+        </el-card>
+      </div>
     </div>
 
     <div id="parent-feed" class="parent-feed">
@@ -69,35 +72,42 @@
           addedDate: '',
           tags: [],
           tag: '',
-          isToBeReviewedFlag: '',
-          isReviewFinishedFlag: ''
+          isToBeReviewedFlag: false,
+          isReviewFinishedFlag: false
         },
         memoryList: [],
         submitted: false,
         isDisplayed: false // これを上のmemoryの中に入れていたら動かなかった。それは当然だ！上に入れていたら、それにアクセスするならmemory.isDisplayedにしないとダメだ。
       }
     },
-    computed: {},
-    watch: {
-      memoryList: function () {
-        axios.get('https://memory-manager-dd40d.firebaseio.com/posts.json').then(data => {
-          this.memoryList = Object.values(data.data)
-          this.memoryList = this.memoryList.slice().reverse()
-          // console.log(data) ここにコンソールを仕込むとログがで続けて不気味なんだけどそれはなぜだ。
-        })
+    computed: {
+      filterCard: function (memory) {
+        return memory.isToBeReviewedFlag === true
       }
     },
+    // watch: {
+    //   memoryList: function () {
+    //     axios.get('https://memory-manager-dd40d.firebaseio.com/posts.json').then(data => {
+    //       this.memoryList = Object.values(data.data)
+    //       this.memoryList = this.memoryList.slice().reverse()
+    //       // console.log(data) ここにコンソールを仕込むとログがで続けて不気味なんだけどそれはなぜだ。
+    //     })
+    //   }
+    // },
     created() {
       axios.get('https://memory-manager-dd40d.firebaseio.com/posts.json').then(data => {
         console.log(data)
         // this.memoryList = data.data これだとオブジェクトなので、配列として扱えない。なのでslice(), reverse()が使えなかった。
         // 配列にするために、Object.values(data.data)を使っている。
 
-        this.memoryList = Object.values(data.data)
-        // this.keys = Object.keys() ここをコメントアウトしないと配列が逆にならない。
+        this.memoryList = Object.values(data.data) //  ここのvaluesメソッドがkeyを消してindexに変えている。
+        const keys = Object.keys(data.data) // ここをコメントアウトしないと配列が逆にならない。ここは配列。keysにオブジェクトのkeyを入れている。
+        this.memoryList.forEach((v, i) => {
+          v.key = keys[i]  //  ここで上のmemoryListでは失われたkeyをmemoryのkeyに入れている。これにより、memoryにkeyを残すことに成功した。
+        })
+        console.log(this.memoryList)
         // console.log(this.memoryList)
         // let keyss = Object.keys(this.memoryList)
-        // console.log(keyss[0])
         this.memoryList = this.memoryList.slice().reverse()
       })
     },
@@ -121,19 +131,28 @@
         this.isDisplayed = !this.isDisplayed // ここ= isDisplayedにしていたら怒られてたけど、今思えば当たり前だ。isDisplayedはローカル変数になるししかもそれはこのメソッドでは定義されていない。
         console.log(this.isDisplayed)
       },
-      review(memory) {
-        // console.log(memory.isReviewFinishedFlag)
-        axios.put('https://memory-manager-dd40d.firebaseio.com/put.json/-L0NgqG0zsUXmj3iuZY4', this.memory).then(function (data) {
-          memory.reviewedTimes += 1  // thisのスコープはexport defaultの中。なしだと、reviewの中になる。
-          memory.isToBeReviewedFlag = true
-          memory.isReviewFinishedFlag = false
-          console.log(memory.isReviewFinishedFlag)
+      review (memory) {
+        memory.reviewedTimes += 1  // thisのスコープはexport defaultの中。なしだと、reviewの中になる。
+        memory.isToBeReviewedFlag = true
+        memory.isReviewFinishedFlag = false
+        //  postする場所はパス構造になっている。
+        axios.put('https://memory-manager-dd40d.firebaseio.com/posts/' + memory.key + '.json', memory).then(function (data) {
+          console.log(data)
         })
       },
-      finishReview() {
+      finishReview () {
         this.memoryList.memory.isReviewFinishedFlag = true
       },
-      edit() {
+      edit () {
+      },
+      addTag(tag) {
+        // document.getElementById('tag').value = tag
+        // document.getElementById('taga').value = tag
+        let tagForm = document.getElementById('tag-form')
+        tagForm.innerHTML = '<span>' + tag + '</span>'
+
+        console.log(tag)
+        console.log(document.getElementById('tag').innerText)
       }
     }
   }
@@ -190,6 +209,22 @@
   .box-card {
     width: 580px;
     display: inline-block;
+  }
+
+  .tags {
+    /*width: 300px;*/
+    list-style: none;
+    display: table-cell;
+  }
+
+  ul {
+    display: table;
+    table-layout: fixed;
+    width: 100%;
+  }
+
+  .tag-form {
+
   }
 
 </style>
