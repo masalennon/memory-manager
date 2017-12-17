@@ -13,9 +13,9 @@
           {{ memory.reviewedTimes }} / 6
           <textarea type="text" v-model="memory.content" required/>
 
-          <div class="tag-wrapper">
-            タグ:<input type="text" id="tag" v-on:keyup.enter="post"/>
-          </div>
+          <!--<div class="tag-wrapper">-->
+            タグ:<input type="text" id="tag" v-model="memory.tag" v-on:keyup.enter="post"/>
+          <!--</div>-->
           <!--↑v-modelをつけるとボタンを押した瞬間に一瞬だけ文字が入ってその後すぐ消えてしまう。-->
 
           <ul v-for="memory in memoryList" class="tags">
@@ -50,8 +50,8 @@
               {{ memory.tag }}
             </p>
             <button @click="review(memory)">復習</button>
-            <button @click="finishReview">復習終了</button>
-            <button @click="edit">編集</button>
+            <button @click="finishReview(memory)">復習終了</button>
+            <button @click="edit(memory)">編集</button>
           </el-card>
         </div>
       </div>
@@ -66,7 +66,7 @@
 
   export default {
     name: '',
-    data() {
+    data () {
       return {
         memory: {
           reviewedTimes: 0,
@@ -74,8 +74,9 @@
           addedDate: '',
           tags: [],
           tag: '',
-          isToBeReviewedFlag: false,
-          isReviewFinishedFlag: false
+          isToBeReviewedFlag: true,
+          isReviewFinishedFlag: false,
+          reviewedDate: ''
         },
         memoryList: [],
         submitted: false,
@@ -87,15 +88,15 @@
         return memory.isToBeReviewedFlag === true
       }
     },
-    // watch: {
-    //   memoryList: function () {
-    //     axios.get('https://memory-manager-dd40d.firebaseio.com/posts.json').then(data => {
-    //       this.memoryList = Object.values(data.data)
-    //       this.memoryList = this.memoryList.slice().reverse()
-    //       // console.log(data) ここにコンソールを仕込むとログがで続けて不気味なんだけどそれはなぜだ。
-    //     })
-    //   }
-    // },
+    watch: {
+      memoryList () {
+        axios.get('https://memory-manager-dd40d.firebaseio.com/posts.json').then(data => {
+          this.memoryList = Object.values(data.data)
+          this.memoryList = this.memoryList.slice().reverse()
+          // console.log(data) ここにコンソールを仕込むとログがで続けて不気味なんだけどそれはなぜだ。
+        })
+      }
+    },
     created () {
       axios.get('https://memory-manager-dd40d.firebaseio.com/posts.json').then(data => {
         console.log(data)
@@ -115,20 +116,11 @@
       })
     },
     methods: {
-      getAddedDate: function () {
-        // return this.addedDate
-      },
       post () {
         let self = this
-        var today = new Date()
-        var month = new Date().getMonth() + 1
-        console.log(this)
-        console.log(self)
-        console.log('awfawf')
+        let reviewedDay = new Date()
+        let reviewedMonth = new Date().getMonth() + 1
         //  arrow関数を使えば、thisが上書きされない。arrow関数でない場合、下のaxios.postのところでselfにthisを代入しなければならなかったが、arrow関数を使えばその必要はない。
-
-        this.memory.addedDate = (today.getFullYear() + '/' + month + '/' + today.getDate() + '/' + today.getDay())
-        console.log(self.addedDate)
         axios.post('https://memory-manager-dd40d.firebaseio.com/posts.json', this.memory).then(data => {
           console.log(data)
           console.log(this)
@@ -137,25 +129,29 @@
           this.memory.content = ''
           this.memory.tag = ''
           this.isDisplayed = false
+          this.addedDate = (reviewedDay.getFullYear() + '/' + reviewedMonth + '/' + reviewedDay.getDate() + '/' + reviewedDay.getDay())
         })
       },
       displayAddForm () {
         this.isDisplayed = !this.isDisplayed // ここ= isDisplayedにしていたら怒られてたけど、今思えば当たり前だ。isDisplayedはローカル変数になるししかもそれはこのメソッドでは定義されていない。
-        console.log(this.isDisplayed)
       },
       review (memory) {
+        let reviewedDay = new Date()
+        let reviewedMonth = new Date().getMonth() + 1
         memory.reviewedTimes += 1  // thisのスコープはexport defaultの中。なしだと、reviewの中になる。
         memory.isToBeReviewedFlag = false
         memory.isReviewFinishedFlag = false
+        memory.reviewedDate = (reviewedDay.getFullYear() + '/' + reviewedMonth + '/' + reviewedDay.getDate() + '/' + reviewedDay.getDay())
+
         //  postする場所はパス構造になっている。
         axios.put('https://memory-manager-dd40d.firebaseio.com/posts/' + memory.key + '.json', memory).then(function (data) {
           console.log(data)
         })
       },
-      finishReview () {
-        this.memoryList.memory.isReviewFinishedFlag = true
+      finishReview (memory) {
+        memory.isReviewFinishedFlag = true
       },
-      edit () {
+      edit (memory) {
       },
       addTag (tag) {
         // document.getElementById('tag').value = tag
