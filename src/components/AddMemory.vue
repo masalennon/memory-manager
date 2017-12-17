@@ -94,9 +94,10 @@
     //     })
     //   }
     // },
-    created() {
+    created () {
       axios.get('https://memory-manager-dd40d.firebaseio.com/posts.json').then(data => {
         console.log(data)
+        console.log(this)
         // this.memoryList = data.data これだとオブジェクトなので、配列として扱えない。なのでslice(), reverse()が使えなかった。
         // 配列にするために、Object.values(data.data)を使っている。
 
@@ -112,22 +113,31 @@
       })
     },
     methods: {
-      getAddedDate: () => {
-        var addedDate = new Date().getDate().toString()
-        this.addedDate = addedDate
-        return addedDate
+      getAddedDate: function () {
+        // return this.addedDate
       },
-      post: function () {
+      post () {
         let self = this
-        axios.post('https://memory-manager-dd40d.firebaseio.com/posts.json', this.memory).then(function (data) {
+        var today = new Date()
+        var month = new Date().getMonth() + 1
+        console.log(this)
+        console.log(self)
+        console.log('awfawf')
+        //  arrow関数を使えば、thisが上書きされない。arrow関数でない場合、下のaxios.postのところでselfにthisを代入しなければならなかったが、arrow関数を使えばその必要はない。
+
+        this.memory.addedDate = (today.getFullYear() + '/' + month + '/' + today.getDate() + '/' + today.getDay())
+        console.log(self.addedDate)
+        axios.post('https://memory-manager-dd40d.firebaseio.com/posts.json', this.memory).then(data => {
           console.log(data)
-          self.submitted = true
-          self.memory.content = ''
-          self.memory.tag = ''
-          self.isDisplayed = false
+          console.log(this)
+          console.log(self)
+          this.submitted = true
+          this.memory.content = ''
+          this.memory.tag = ''
+          this.isDisplayed = false
         })
       },
-      displayAddForm: function () {
+      displayAddForm () {
         this.isDisplayed = !this.isDisplayed // ここ= isDisplayedにしていたら怒られてたけど、今思えば当たり前だ。isDisplayedはローカル変数になるししかもそれはこのメソッドでは定義されていない。
         console.log(this.isDisplayed)
       },
@@ -145,7 +155,7 @@
       },
       edit () {
       },
-      addTag(tag) {
+      addTag (tag) {
         // document.getElementById('tag').value = tag
         // document.getElementById('taga').value = tag
         let tagForm = document.getElementById('tag-form')
