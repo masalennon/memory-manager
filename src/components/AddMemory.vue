@@ -14,14 +14,14 @@
           <textarea type="text" v-model="memory.content" required/>
 
           <!--<div class="tag-wrapper">-->
-            タグ:<input type="text" id="tag" v-model="memory.tag" v-on:keyup.enter="post"/>
+          タグ:<input type="text" id="tag" v-model="memory.tag" v-on:keyup.enter="post"/>
           <!--</div>-->
           <!--↑v-modelをつけるとボタンを押した瞬間に一瞬だけ文字が入ってその後すぐ消えてしまう。-->
 
           <ul v-for="memory in memoryList" class="tags">
             <button @click.prevent="addTag(memory.tag)">{{ memory.tag }}</button>
           </ul>
-          <button @click.prevent="post">追加する</button>
+          <button id="post-button" @click.prevent="post()">追加する</button>
         </el-card>
       </div>
     </div>
@@ -66,7 +66,7 @@
 
   export default {
     name: '',
-    data () {
+    data() {
       return {
         memory: {
           reviewedTimes: 0,
@@ -78,6 +78,7 @@
           isReviewFinishedFlag: false,
           reviewedDate: ''
         },
+        blockMultiPostNum: 0,
         memoryList: [],
         submitted: false,
         isDisplayed: false // これを上のmemoryの中に入れていたら動かなかった。それは当然だ！上に入れていたら、それにアクセスするならmemory.isDisplayedにしないとダメだ。
@@ -86,18 +87,12 @@
     computed: {
       filterCard: function (memory) {
         return memory.isToBeReviewedFlag === true
+      },
+      updatFeed: function () {
+
       }
     },
-    watch: {
-      memoryList () {
-        axios.get('https://memory-manager-dd40d.firebaseio.com/posts.json').then(data => {
-          this.memoryList = Object.values(data.data)
-          this.memoryList = this.memoryList.slice().reverse()
-          // console.log(data) ここにコンソールを仕込むとログがで続けて不気味なんだけどそれはなぜだ。
-        })
-      }
-    },
-    created () {
+    created() {
       axios.get('https://memory-manager-dd40d.firebaseio.com/posts.json').then(data => {
         console.log(data)
         console.log(this)
@@ -110,50 +105,81 @@
           v.key = keys[i]  //  ここで上のmemoryListでは失われたkeyをmemoryのkeyに入れている。これにより、memoryにkeyを残すことに成功した。
         })
         console.log(this.memoryList)
-        // console.log(this.memoryList)
-        // let keyss = Object.keys(this.memoryList)
         this.memoryList = this.memoryList.slice().reverse()
       })
     },
     methods: {
-      post () {
-        let self = this
-        let reviewedDay = new Date()
-        let reviewedMonth = new Date().getMonth() + 1
-        //  arrow関数を使えば、thisが上書きされない。arrow関数でない場合、下のaxios.postのところでselfにthisを代入しなければならなかったが、arrow関数を使えばその必要はない。
-        axios.post('https://memory-manager-dd40d.firebaseio.com/posts.json', this.memory).then(data => {
-          console.log(data)
-          console.log(this)
-          console.log(self)
-          this.submitted = true
-          this.memory.content = ''
-          this.memory.tag = ''
-          this.isDisplayed = false
-          this.addedDate = (reviewedDay.getFullYear() + '/' + reviewedMonth + '/' + reviewedDay.getDate() + '/' + reviewedDay.getDay())
-        })
+      post() {
+        var postButton = document.getElementById('post-button')
+        postButton.disabled = true
+        console.log(this.blockMultiPostNum)
+        if (this.blockMultiPostNum === 0) {
+          this.blockMultiPostNum += 1
+          console.log(this.blockMultiPostNum)
+          let reviewedDay = new Date()
+          let reviewedMonth = new Date().getMonth() + 1
+          this.memory.addedDate = (reviewedDay.getFullYear() + '/' + reviewedMonth + '/' + reviewedDay.getDate() + '/' + reviewedDay.getDay())//  これをpostのなかに入れたらnullになってしまった。then(dataのところで設定されているdataをpostするのだろうな。
+          //  arrow関数を使えば、thisが上書きされない。arrow関数でない場合、下のaxios.postのところでselfにthisを代入しなければならなかったが、arrow関数を使えばその必要はない。
+          axios.post('https://memory-manager-dd40d.firebaseio.com/posts.json', this.memory).then(data => {
+            console.log('aaaa')
+            this.submitted = true
+            this.memory.content = ''
+            this.memory.tag = ''
+            this.isDisplayed = false
+          })
+          setTimeout(() => {
+            axios.get('https://memory-manager-dd40d.firebaseio.com/posts.json').then(data => {
+              // console.log(this)
+              this.memoryList = Object.values(data.data)
+              this.memoryList = this.memoryList.slice().reverse()
+            })
+          }, 800)
+        }
+        postButton.disabled = false
       },
-      displayAddForm () {
+      displayAddForm() {
+        this.blockMultiPostNum = 0
         this.isDisplayed = !this.isDisplayed // ここ= isDisplayedにしていたら怒られてたけど、今思えば当たり前だ。isDisplayedはローカル変数になるししかもそれはこのメソッドでは定義されていない。
       },
-      review (memory) {
-        let reviewedDay = new Date()
+      review(memory) {
+        let reviewedDate = new Date()
         let reviewedMonth = new Date().getMonth() + 1
         memory.reviewedTimes += 1  // thisのスコープはexport defaultの中。なしだと、reviewの中になる。
         memory.isToBeReviewedFlag = false
         memory.isReviewFinishedFlag = false
-        memory.reviewedDate = (reviewedDay.getFullYear() + '/' + reviewedMonth + '/' + reviewedDay.getDate() + '/' + reviewedDay.getDay())
-
+        memory.reviewedDate = (reviewedDate.getFullYear() + '/' + reviewedMonth + '/' + reviewedDate.getDate() + '/' + reviewedDate.getDay())
+        var i
+        switch (memory.reviewedTimes) {
+          case '1':
+            i = 1
+            break
+          case '2':
+            i = 3
+            break
+          case '3':
+            i = 7
+            break
+          case '4':
+            i = 21
+            break
+          case '5':
+            i = 30
+            break
+          case '6':
+            memory.isReviewFinishedFlag = true
+            break
+        }
+        memory.nextReviewDate = new Date(reviewedDate.getTime() + i * 24 * 60 * 60 * 1000).toString()
         //  postする場所はパス構造になっている。
         axios.put('https://memory-manager-dd40d.firebaseio.com/posts/' + memory.key + '.json', memory).then(function (data) {
-          console.log(data)
         })
       },
-      finishReview (memory) {
+      finishReview(memory) {
         memory.isReviewFinishedFlag = true
       },
-      edit (memory) {
+      edit(memory) {
       },
-      addTag (tag) {
+      addTag(tag) {
         // document.getElementById('tag').value = tag
         // document.getElementById('taga').value = tag
         let tagForm = document.getElementById('tag-form')
