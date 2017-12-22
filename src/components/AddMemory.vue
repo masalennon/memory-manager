@@ -14,18 +14,42 @@
           <textarea type="text" v-model="memory.content" required/>
 
           <!--<div class="tag-wrapper">-->
-          タグ:<input type="text" id="tag" v-model="memory.tag" v-on:keyup.enter="post"/>
+          タグ:<input type="text" id="tag-input" v-model="memory.tag" v-on:keyup.enter="post" @input="addTag"/>
           <!--</div>-->
           <!--↑v-modelをつけるとボタンを押した瞬間に一瞬だけ文字が入ってその後すぐ消えてしまう。-->
 
           <ul v-for="memory in memoryList" class="tags">
-            <button @click.prevent="addTag(memory.tag)">{{ memory.tag }}</button>
+            <button @click.prevent="addTag()">{{ memory.tag }}</button>
           </ul>
           <button id="post-button" @click.prevent="post()">追加する</button>
         </el-card>
       </div>
     </div>
 
+    <el-card class="box-card add-form">
+      <p>{{ memory.reviewedTimes }} / 6</p>
+      <p>
+        <textarea type="text" v-model="memory.content" placeholder="本文を入力" required/>
+      </p>
+
+      <p>
+        <input type="text" id="fixed-tag-input" v-model="memory.tag" v-on:keyup.enter="post" @input="addTag"
+               placeholder="タグを追加"/>
+      </p>
+      <div v-for="value in tagCompletionList">
+        <span class="tag-span">{{ value }}</span>
+      </div>
+      <ul v-for="memory in memoryList" class="tags">
+        <button @click.prevent="addTagByButton(memory.tag)">
+          {{ memory.tag }}
+        </button>
+      </ul>
+      <!--<div class="tag-wrapper">-->
+      <!--</div>-->
+      <!--↑v-modelをつけるとボタンを押した瞬間に一瞬だけ文字が入ってその後すぐ消えてしまう。-->
+
+      <button id="fixed-post-button" @click.prevent="post()">追加する</button>
+    </el-card>
     <div id="parent-feed" class="parent-feed">
       <div class="clear-fix">
         <!--{{ memory.reviewedTimes }} / 6-->
@@ -78,6 +102,7 @@
           isReviewFinishedFlag: false,
           reviewedDate: ''
         },
+        tagCompletionList: [],
         blockMultiPostNum: 0,
         memoryList: [],
         submitted: false,
@@ -93,6 +118,14 @@
       }
     },
     created() {
+      this.memoryList.forEach((v, i) => {
+        let reviewedDate = new Date()
+        let reviewedMonth = new Date().getMonth() + 1
+        if (v.nextReviewDate.equal((reviewedDate.getFullYear() + '/' +
+            reviewedMonth + '/' + reviewedDate.getDate()))) {
+          v.isToBeReviewedFlag = true
+        }
+      })
       axios.get('https://memory-manager-dd40d.firebaseio.com/posts.json').then(data => {
         console.log(data)
         console.log(this)
@@ -147,7 +180,7 @@
         memory.reviewedTimes += 1  // thisのスコープはexport defaultの中。なしだと、reviewの中になる。
         memory.isToBeReviewedFlag = false
         memory.isReviewFinishedFlag = false
-        memory.reviewedDate = (reviewedDate.getFullYear() + '/' + reviewedMonth + '/' + reviewedDate.getDate() + '/' + reviewedDate.getDay())
+        memory.reviewedDate = (reviewedDate.getFullYear() + '/' + reviewedMonth + '/' + reviewedDate.getDate())
         var i
         switch (memory.reviewedTimes) {
           case '1':
@@ -179,14 +212,17 @@
       },
       edit(memory) {
       },
-      addTag(tag) {
-        // document.getElementById('tag').value = tag
-        // document.getElementById('taga').value = tag
-        let tagForm = document.getElementById('tag-form')
-        tagForm.innerHTML = '<span>' + tag + '</span>'
-
+      addTag () {
+        let targetString = document.getElementById('fixed-tag-input').value
+        var separatorString = ' '
+        this.tagCompletionList = targetString.split(separatorString)
+        console.log(this.tagCompletionList)
+      },
+      addTagByButton (tag) {
         console.log(tag)
-        console.log(document.getElementById('tag').innerText)
+        if (!this.tagCompletionList.includes(tag)) {
+          this.tagCompletionList.push(tag)
+        }
       }
     }
   }
