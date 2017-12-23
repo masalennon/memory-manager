@@ -33,11 +33,12 @@
       </p>
 
       <p>
-        <input type="text" id="fixed-tag-input" v-model="memory.tag" v-on:keyup.enter="post" @input="addTag"
+        <input type="text" id="fixed-tag-input" class="fixed-tag-input" v-model="memory.tag" v-on:keyup.enter="post"
+               @input="addTag"
                placeholder="タグを追加"/>
       </p>
-      <div v-for="value in tagCompletionList">
-        <span class="tag-span">{{ value }}</span>
+      <div class="tag-span-wrapper">
+        <span class="tag-span" v-for="value in tagCompletionList">{{ value }}</span>
       </div>
       <ul v-for="memory in memoryList" class="tags">
         <button @click.prevent="addTagByButton(memory.tag)">
@@ -48,7 +49,9 @@
       <!--</div>-->
       <!--↑v-modelをつけるとボタンを押した瞬間に一瞬だけ文字が入ってその後すぐ消えてしまう。-->
 
-      <button id="fixed-post-button" @click.prevent="post()">追加する</button>
+      <p>
+        <button id="fixed-post-button" @click.prevent="post()">追加する</button>
+      </p>
     </el-card>
     <div id="parent-feed" class="parent-feed">
       <div class="clear-fix">
@@ -212,17 +215,23 @@
       },
       edit(memory) {
       },
-      addTag () {
+      addTag() {
         let targetString = document.getElementById('fixed-tag-input').value
         var separatorString = ' '
         this.tagCompletionList = targetString.split(separatorString)
-        console.log(this.tagCompletionList)
+        this.tagCompletionList = this.tagCompletionList.filter((e) => { //  これで''を配列から削除できる
+          console.log(e)
+          return e !== ''  //  このeはinputへの入力。''でないinputを返すのか。filter配列の要素を一つ一つ見てここの式がtrueになる配列を新たに生成するらしい。
+        })
+
+        // console.log(this.tagCompletionList)
       },
-      addTagByButton (tag) {
+      addTagByButton(tag) {
         console.log(tag)
         if (!this.tagCompletionList.includes(tag)) {
           this.tagCompletionList.push(tag)
         }
+        console.log(this.tagCompletionList)
       }
     }
   }
@@ -284,7 +293,8 @@
   .tags {
     /*width: 300px;*/
     list-style: none;
-    display: table-cell;
+    /*display: table-cell;*/
+    display: inline;
   }
 
   ul {
@@ -293,7 +303,22 @@
     width: 100%;
   }
 
-  .tag-form {
+  .fixed-tag-input {
+    color: transparent;
+    width: 520px;
+  }
+
+  .tag-span {
+    background: antiquewhite;
+    margin-left: 2px;
+    margin-right: 2px;
+    border-radius: 3px;
+    padding-right: 2px;
+    padding-left: 2px;
+  }
+
+  .tag-span-wrapper {
+    position: absolute;
 
   }
 
