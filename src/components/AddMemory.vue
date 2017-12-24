@@ -33,16 +33,17 @@
       </p>
 
       <p>
-        <input type="text" id="fixed-tag-input" class="fixed-tag-input" v-model="memory.tag" v-on:keyup.enter="post"
-               @input="addTag"
+        <input type="text" id="fixed-tag-input" class="fixed-tag-input" v-on:keyup.enter="post"
+               @input="addTag" spellcheck="false"
                placeholder="タグを追加"/>
       </p>
       <div class="tag-span-wrapper">
         <span class="tag-span" v-for="value in tagCompletionList">{{ value }}</span>
       </div>
-      <ul v-for="memory in memoryList" class="tags">
+      <ul v-for="value in availableTags" class="tags">
         <button @click.prevent="addTagByButton(memory.tag)">
-          {{ memory.tag }}
+          {{ value }}
+          <!--{{ availableTags }}-->
         </button>
       </ul>
       <!--<div class="tag-wrapper">-->
@@ -73,12 +74,13 @@
             <p>
               タグ
             </p>
-            <p>
-              {{ memory.tag }}
-            </p>
+            <div class="">
+              <span class="tag-span" v-for="value in memory.tags">{{ value }}</span>
+            </div>
             <button @click="review(memory)">復習</button>
             <button @click="finishReview(memory)">復習終了</button>
             <button @click="edit(memory)">編集</button>
+            <button @click="delet(memory)">削除</button>
           </el-card>
         </div>
       </div>
@@ -108,17 +110,19 @@
         tagCompletionList: [],
         blockMultiPostNum: 0,
         memoryList: [],
+        availableTags: [],
         submitted: false,
         isDisplayed: false // これを上のmemoryの中に入れていたら動かなかった。それは当然だ！上に入れていたら、それにアクセスするならmemory.isDisplayedにしないとダメだ。
       }
     },
     computed: {
-      filterCard: function (memory) {
-        return memory.isToBeReviewedFlag === true
-      },
       updatFeed: function () {
-
-      }
+      },
+    },
+    filters: {
+      // fileterUniqueTag: (value, x, self) => {
+      //   value = value.
+      // }
     },
     created() {
       this.memoryList.forEach((v, i) => {
@@ -129,6 +133,11 @@
           v.isToBeReviewedFlag = true
         }
       })
+      this.availableTags = this.memory.tags.filter((x, i, self) => {
+        return self.indexOf(x) === i
+      })
+      console.log(this.availableTags)
+      console.log(this.memory.tags)
       axios.get('https://memory-manager-dd40d.firebaseio.com/posts.json').then(data => {
         console.log(data)
         console.log(this)
@@ -138,6 +147,7 @@
         this.memoryList = Object.values(data.data) //  ここのvaluesメソッドがkeyを消してindexに変えている。
         const keys = Object.keys(data.data) // ここをコメントアウトしないと配列が逆にならない。ここは配列。keysにオブジェクトのkeyを入れている。
         this.memoryList.forEach((v, i) => {
+          // this.availableTags = v.tags[i].concat()
           v.key = keys[i]  //  ここで上のmemoryListでは失われたkeyをmemoryのkeyに入れている。これにより、memoryにkeyを残すことに成功した。
         })
         console.log(this.memoryList)
@@ -145,26 +155,46 @@
       })
     },
     methods: {
+      filteredTags: () => {
+        this.memoryList.memory.tags = this.memoryList.memory.tags.filter((e, i, self) => {
+          return e !== '' && self.indexOf(e) === i
+        })
+      },
       post() {
-        var postButton = document.getElementById('post-button')
+        var postButton = document.getElementById('fixed-post-button')
         postButton.disabled = true
         console.log(this.blockMultiPostNum)
+        var tempTag = []
+        tempTag = this.memory.tags.filter((e, i, self) => {
+          console.log('e => ' + e)
+          console.log('i => ' + i)
+          console.log('self => ' + self)
+          return self.indexOf(e) !== i
+        })
+        console.log(tempTag)
         if (this.blockMultiPostNum === 0) {
           this.blockMultiPostNum += 1
           console.log(this.blockMultiPostNum)
+          console.log('e => ' )
           let reviewedDay = new Date()
           let reviewedMonth = new Date().getMonth() + 1
+          this.memory.tags = this.tagCompletionList
           this.memory.addedDate = (reviewedDay.getFullYear() + '/' + reviewedMonth + '/' + reviewedDay.getDate() + '/' + reviewedDay.getDay())//  これをpostのなかに入れたらnullになってしまった。then(dataのところで設定されているdataをpostするのだろうな。
           //  arrow関数を使えば、thisが上書きされない。arrow関数でない場合、下のaxios.postのところでselfにthisを代入しなければならなかったが、arrow関数を使えばその必要はない。
           axios.post('https://memory-manager-dd40d.firebaseio.com/posts.json', this.memory).then(data => {
-            console.log('aaaa')
             this.submitted = true
             this.memory.content = ''
-            this.memory.tag = ''
+            this.memory.tags = []
+            this.tagCompletionList = []
             this.isDisplayed = false
           })
           setTimeout(() => {
             axios.get('https://memory-manager-dd40d.firebaseio.com/posts.json').then(data => {
+              this.memoryList = Object.values(data.data) //  ここのvaluesメソッドがkeyを消してindexに変えている。
+              const keys = Object.keys(data.data) // ここをコメントアウトしないと配列が逆にならない。ここは配列。keysにオブジェクトのkeyを入れている。
+              this.memoryList.forEach((v, i) => {
+                v.key = keys[i]  //  ここで上のmemoryListでは失われたkeyをmemoryのkeyに入れている。これにより、memoryにkeyを残すことに成功した。
+              })
               // console.log(this)
               this.memoryList = Object.values(data.data)
               this.memoryList = this.memoryList.slice().reverse()
@@ -172,6 +202,21 @@
           }, 800)
         }
         postButton.disabled = false
+        this.blockMultiPostNum = 0
+      },
+      delet (memory) {
+        console.log('delete')
+        axios.delete('https://memory-manager-dd40d.firebaseio.com/posts' + memory.key + '.json', {
+          params:
+          { content: '' }
+        })
+        setTimeout(() => {
+          axios.get('https://memory-manager-dd40d.firebaseio.com/posts.json').then(data => {
+            // console.log(this)
+            this.memoryList = Object.values(data.data)
+            this.memoryList = this.memoryList.slice().reverse()
+          })
+        }, 800)
       },
       displayAddForm() {
         this.blockMultiPostNum = 0
@@ -230,8 +275,9 @@
         console.log(tag)
         if (!this.tagCompletionList.includes(tag)) {
           this.tagCompletionList.push(tag)
+          // this.document.getElementById('fixed-tag-input').value = tag
         }
-        console.log(this.tagCompletionList)
+        console.log(this.memory.tags)
       }
     }
   }
@@ -306,19 +352,31 @@
   .fixed-tag-input {
     color: transparent;
     width: 520px;
+    height: 35px;
+    font-weight: 400;
+    font-size: 1.1em;
+    border: 1px solid #ccc;
+    -webkit-border-radius: 1px;
+    -moz-border-radius: 1px;
+    border-radius: 5px;
   }
 
   .tag-span {
+    position: relative;
     background: antiquewhite;
     margin-left: 2px;
     margin-right: 2px;
     border-radius: 3px;
     padding-right: 2px;
     padding-left: 2px;
+    font-weight: 400;
+    font-size: 1.2em;
   }
 
   .tag-span-wrapper {
     position: absolute;
+    bottom: 740px;
+    left: 310px;
 
   }
 
