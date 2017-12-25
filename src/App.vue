@@ -34,7 +34,6 @@
   }
 
   .parent-feed {
-    width: 700px;
     display: inline-block;
   }
 </style>

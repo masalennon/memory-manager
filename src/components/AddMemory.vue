@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div style="width: 1000px;">
     <div class="add-memory">
       <div class="add-button" v-if="isDisplayed">
         <button @click="displayAddForm">閉じる</button>
@@ -27,16 +27,14 @@
     </div>
 
     <el-card class="box-card add-form">
-      <p>{{ memory.reviewedTimes }} / 6</p>
-      <p>
-        <textarea type="text" v-model="memory.content" placeholder="本文を入力" required/>
-      </p>
-
-      <p>
+      <!--<p>{{ memory.reviewedTimes }} / 6</p>-->
+      <div class="editor-tag">
         <input type="text" id="fixed-tag-input" class="fixed-tag-input" v-on:keyup.enter="post"
                @input="addTag" spellcheck="false"
                placeholder="タグを追加"/>
-      </p>
+        <textarea class="fixed-content" id="fixed-content" type="text" v-model="memory.content"
+                  placeholder="本文を入力" :rows="rows" required/>
+      </div>
       <div class="tag-span-wrapper">
         <span class="tag-span" v-for="value in tagCompletionList">{{ value }}</span>
       </div>
@@ -46,41 +44,42 @@
           <!--{{ availableTags }}-->
         </button>
       </ul>
+      <ul v-for="memory in memoryList" class="tags">
+        <button @click.prevent="addTagByButton(memory.tag)">
+          {{ memory.tag }}
+        </button>
+      </ul>
+
       <!--<div class="tag-wrapper">-->
       <!--</div>-->
       <!--↑v-modelをつけるとボタンを押した瞬間に一瞬だけ文字が入ってその後すぐ消えてしまう。-->
 
-      <p>
         <button id="fixed-post-button" @click.prevent="post()">追加する</button>
-      </p>
     </el-card>
     <div id="parent-feed" class="parent-feed">
       <div class="clear-fix">
         <!--{{ memory.reviewedTimes }} / 6-->
         <!--内容:{{ memory.content }}-->
         <div class="child-feed" v-for="memory in memoryList" v-if="memory.isToBeReviewedFlag">
-
-
           <el-card class="box-card">
-          <span>
+            <div class="buttons">
+              <button @click="review(memory)">復習</button>
+              <button @click="finishReview(memory)">復習終了</button>
+              <button @click="edit(memory)">編集</button>
+              <button @click="delet(memory)">削除</button>
+            </div>
+            <span>
             {{ memory.addedDate }}〜
-          </span>
+            </span>
             <span>
             {{ memory.reviewedTimes }}回目
-          </span>
-            <p>
+            </span>
+            <div class="memory-content feed">
               {{ memory.content }}
-            </p>
-            <p>
-              タグ
-            </p>
+            </div>
             <div class="">
               <span class="tag-span" v-for="value in memory.tags">{{ value }}</span>
             </div>
-            <button @click="review(memory)">復習</button>
-            <button @click="finishReview(memory)">復習終了</button>
-            <button @click="edit(memory)">編集</button>
-            <button @click="delet(memory)">削除</button>
           </el-card>
         </div>
       </div>
@@ -118,6 +117,10 @@
     computed: {
       updatFeed: function () {
       },
+      rows: function() {
+        var num = this.memory.content.split("\n").length
+        return (num > 4) ? num : 4
+      }
     },
     filters: {
       // fileterUniqueTag: (value, x, self) => {
@@ -174,11 +177,12 @@
         console.log(tempTag)
         if (this.blockMultiPostNum === 0) {
           this.blockMultiPostNum += 1
-          console.log(this.blockMultiPostNum)
-          console.log('e => ' )
           let reviewedDay = new Date()
           let reviewedMonth = new Date().getMonth() + 1
-          this.memory.tags = this.tagCompletionList
+          this.memory.tags = this.tagCompletionList.filter((x, i, self) => {
+            return self.indexOf(x) === i
+          })
+          // this.memory.tags = this.tagCompletionList
           this.memory.addedDate = (reviewedDay.getFullYear() + '/' + reviewedMonth + '/' + reviewedDay.getDate() + '/' + reviewedDay.getDay())//  これをpostのなかに入れたらnullになってしまった。then(dataのところで設定されているdataをpostするのだろうな。
           //  arrow関数を使えば、thisが上書きされない。arrow関数でない場合、下のaxios.postのところでselfにthisを代入しなければならなかったが、arrow関数を使えばその必要はない。
           axios.post('https://memory-manager-dd40d.firebaseio.com/posts.json', this.memory).then(data => {
@@ -204,11 +208,11 @@
         postButton.disabled = false
         this.blockMultiPostNum = 0
       },
-      delet (memory) {
+      delet(memory) {
         console.log('delete')
         axios.delete('https://memory-manager-dd40d.firebaseio.com/posts' + memory.key + '.json', {
           params:
-          { content: '' }
+            {content: ''}
         })
         setTimeout(() => {
           axios.get('https://memory-manager-dd40d.firebaseio.com/posts.json').then(data => {
@@ -221,6 +225,28 @@
       displayAddForm() {
         this.blockMultiPostNum = 0
         this.isDisplayed = !this.isDisplayed // ここ= isDisplayedにしていたら怒られてたけど、今思えば当たり前だ。isDisplayedはローカル変数になるししかもそれはこのメソッドでは定義されていない。
+      },
+      adjustTextarea () {
+        var ta = document.getElementById('fixed-content');
+        ta.style.lineHeight = '10px'
+        ta.style.height = '184px'
+
+        ta.addEventListener('input', function (evt) {
+          if (evt.target.scrollHeight > evt.target.offsetHeight) {
+            evt.target.style.height = evt.target.scrollHeight + 'px'
+          } else {
+            var height, lineHeight
+            while (true) {
+              height = Number(evt.target.style.height.split('px')[0])
+              lineHeight = Number(evt.target.style.lineHeight.split('px')[0])
+              evt.target.style.height = height - lineHeight + 'px'
+              if (evt.target.scrollHeight > evt.target.offsetHeight) {
+                evt.target.style.height = evt.target.scrollHeight + 'px'
+                break
+              }
+            }
+          }
+        })
       },
       review(memory) {
         let reviewedDate = new Date()
@@ -290,11 +316,12 @@
   .add-memory {
     position: fixed;
     width: 300px;
+    height: 300px;
     left: 50px;
   }
 
   .add-form {
-    background: lightblue;
+    background: #f5f5f5;
     left: 50px;
     margin-top: 25px;
     /*margin-right: auto;*/
@@ -333,6 +360,7 @@
 
   .box-card {
     width: 580px;
+    height: 300px;
     display: inline-block;
   }
 
@@ -349,9 +377,37 @@
     width: 100%;
   }
 
+  .tag-span-wrapper {
+    position: relative;
+    width: 0px;
+    left: 5px;
+    top: 7px;
+    /*bottom: 740px;*/
+    /*left: 310px;*/
+  }
+
+  .editor-tag {
+    position: absolute;
+    width: 400px;
+  }
+
+  .tag-span {
+    position: relative;
+    background: #d9d9d9;
+    margin-left: 3px;
+    margin-right: 3px;
+    border-radius: 3px;
+    padding-right: 4px;
+    padding-left: 4px;
+    padding-top: 2px;
+    padding-bottom: 2px;
+    font-weight: 400;
+    font-size: 1.2em;
+  }
+
   .fixed-tag-input {
     color: transparent;
-    width: 520px;
+    width: 530px;
     height: 35px;
     font-weight: 400;
     font-size: 1.1em;
@@ -359,25 +415,29 @@
     -webkit-border-radius: 1px;
     -moz-border-radius: 1px;
     border-radius: 5px;
-  }
-
-  .tag-span {
     position: relative;
-    background: antiquewhite;
-    margin-left: 2px;
-    margin-right: 2px;
-    border-radius: 3px;
-    padding-right: 2px;
-    padding-left: 2px;
-    font-weight: 400;
-    font-size: 1.2em;
+    padding-left: 6px;
+    /*bottom: 740px;*/
+    /*left: 310px;*/
   }
 
-  .tag-span-wrapper {
-    position: absolute;
-    bottom: 740px;
-    left: 310px;
-
+  .feed {
+    margin-top: 10px !important;
+    min-height: 120px;
+    text-align: left;
+  }
+  .buttons {
+    float: left;
+  }
+  .fixed-content {
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    margin-top: 30px;
+    width: 530px;
+    box-sizing: border-box;
+    min-height: 100px;
+    font-size: 1.1em;
+    /*line-height: 30px;*/
   }
 
 </style>
