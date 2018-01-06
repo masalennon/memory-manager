@@ -21,7 +21,10 @@
           <ul v-for="memory in memoryList" class="tags">
             <button @click.prevent="addTag()">{{ memory.tag }}</button>
           </ul>
-          <button id="post-button" @click.prevent="post()">追加する</button>
+
+          <p>
+            <button id="post-button" @click.prevent="post()">追加する</button>
+          </p>
         </el-card>
       </div>
     </div>
@@ -29,32 +32,31 @@
     <el-card class="box-card add-form">
       <!--<p>{{ memory.reviewedTimes }} / 6</p>-->
       <div class="editor-tag">
-        <input type="text" id="fixed-tag-input" class="fixed-tag-input" v-on:keyup.enter="post"
-               @input="addTag" spellcheck="false"
+        <!--<p>-->
+        <input type="text" id="fixed-tag-input" class="fixed-tag-input" @input="addTag" spellcheck="false"
                placeholder="タグを追加"/>
-        <textarea class="fixed-content" id="fixed-content" type="text" v-model="memory.content"
-                  placeholder="本文を入力" :rows="rows" required/>
+        <!--</p>-->
+        <div>
+          <textarea class="fixed-content" id="fixed-content" type="text" v-model="memory.content"
+                    placeholder="本文を入力" :rows="rows" required/>
+        </div>
       </div>
       <div class="tag-span-wrapper">
         <span class="tag-span" v-for="value in tagCompletionList">{{ value }}</span>
       </div>
-      <ul v-for="value in availableTags" class="tags">
-        <button @click.prevent="addTagByButton(memory.tag)">
-          {{ value }}
-          <!--{{ availableTags }}-->
-        </button>
-      </ul>
-      <ul v-for="memory in memoryList" class="tags">
-        <button @click.prevent="addTagByButton(memory.tag)">
+      <div v-for="memory in memoryList" class="tags">
+        <button class="tag-button" @click.prevent="addTagByButton(memory.tag)">
           {{ memory.tag }}
         </button>
-      </ul>
+      </div>
 
       <!--<div class="tag-wrapper">-->
       <!--</div>-->
       <!--↑v-modelをつけるとボタンを押した瞬間に一瞬だけ文字が入ってその後すぐ消えてしまう。-->
 
+      <div>
         <button id="fixed-post-button" @click.prevent="post()">追加する</button>
+      </div>
     </el-card>
     <div id="parent-feed" class="parent-feed">
       <div class="clear-fix">
@@ -74,7 +76,7 @@
             <span>
             {{ memory.reviewedTimes }}回目
             </span>
-            <div class="memory-content feed">
+            <div class="feed">
               {{ memory.content }}
             </div>
             <div class="">
@@ -117,7 +119,7 @@
     computed: {
       updatFeed: function () {
       },
-      rows: function() {
+      rows: function () {
         var num = this.memory.content.split("\n").length
         return (num > 4) ? num : 4
       }
@@ -166,7 +168,6 @@
       post() {
         var postButton = document.getElementById('fixed-post-button')
         postButton.disabled = true
-        console.log(this.blockMultiPostNum)
         var tempTag = []
         tempTag = this.memory.tags.filter((e, i, self) => {
           console.log('e => ' + e)
@@ -226,28 +227,6 @@
         this.blockMultiPostNum = 0
         this.isDisplayed = !this.isDisplayed // ここ= isDisplayedにしていたら怒られてたけど、今思えば当たり前だ。isDisplayedはローカル変数になるししかもそれはこのメソッドでは定義されていない。
       },
-      adjustTextarea () {
-        var ta = document.getElementById('fixed-content');
-        ta.style.lineHeight = '10px'
-        ta.style.height = '184px'
-
-        ta.addEventListener('input', function (evt) {
-          if (evt.target.scrollHeight > evt.target.offsetHeight) {
-            evt.target.style.height = evt.target.scrollHeight + 'px'
-          } else {
-            var height, lineHeight
-            while (true) {
-              height = Number(evt.target.style.height.split('px')[0])
-              lineHeight = Number(evt.target.style.lineHeight.split('px')[0])
-              evt.target.style.height = height - lineHeight + 'px'
-              if (evt.target.scrollHeight > evt.target.offsetHeight) {
-                evt.target.style.height = evt.target.scrollHeight + 'px'
-                break
-              }
-            }
-          }
-        })
-      },
       review(memory) {
         let reviewedDate = new Date()
         let reviewedMonth = new Date().getMonth() + 1
@@ -285,11 +264,21 @@
         memory.isReviewFinishedFlag = true
       },
       edit(memory) {
+        memory.isToBeEditedFlag = !memory.isToBeEditedFlag
+        console.log(memory.key)
+        let targetString = memory.tag
+        var separatorString = ' '
+        this.tagCompletionList = targetString.split(separatorString)
+        this.tagCompletionList = this.tag
       },
       addTag() {
         let targetString = document.getElementById('fixed-tag-input').value
         var separatorString = ' '
+        var separatorString2 = '　'
         this.tagCompletionList = targetString.split(separatorString)
+        let aaa = this.tagCompletionList.join('')
+        this.tagCompletionList = aaa.split(separatorString2)
+        // this.tagCompletionList = targetString.split(separatorString2)
         this.tagCompletionList = this.tagCompletionList.filter((e) => { //  これで''を配列から削除できる
           console.log(e)
           return e !== ''  //  このeはinputへの入力。''でないinputを返すのか。filter配列の要素を一つ一つ見てここの式がtrueになる配列を新たに生成するらしい。
@@ -300,8 +289,15 @@
       addTagByButton(tag) {
         console.log(tag)
         if (!this.tagCompletionList.includes(tag)) {
-          this.tagCompletionList.push(tag)
           // this.document.getElementById('fixed-tag-input').value = tag
+          let targetString = document.getElementById('fixed-tag-input').value
+          targetString = '' + tag + ' '
+          var separatorString = ' '
+          this.tagCompletionList = targetString.split(separatorString)
+          this.tagCompletionList = this.tagCompletionList.filter((e) => { //  これで''を配列から削除できる
+            console.log(e)
+            return e !== ''  //  このeはinputへの入力。''でないinputを返すのか。filter配列の要素を一つ一つ見てここの式がtrueになる配列を新たに生成するらしい。
+          })
         }
         console.log(this.memory.tags)
       }
@@ -366,9 +362,11 @@
 
   .tags {
     /*width: 300px;*/
+    position: relative;
     list-style: none;
     /*display: table-cell;*/
     display: inline;
+    margin-left: 10px;
   }
 
   ul {
@@ -393,7 +391,7 @@
 
   .tag-span {
     position: relative;
-    background: #d9d9d9;
+    background: #e9e9f2;;
     margin-left: 3px;
     margin-right: 3px;
     border-radius: 3px;
@@ -425,10 +423,13 @@
     margin-top: 10px !important;
     min-height: 120px;
     text-align: left;
+    white-space: pre-wrap;
   }
+
   .buttons {
     float: left;
   }
+
   .fixed-content {
     border-radius: 5px;
     border: 1px solid #ccc;
@@ -439,5 +440,10 @@
     font-size: 1.1em;
     /*line-height: 30px;*/
   }
+
+  .tag-button {
+    position: absolute;
+  }
+
 
 </style>
