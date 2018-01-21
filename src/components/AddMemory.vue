@@ -19,7 +19,7 @@
           <!--↑v-modelをつけるとボタンを押した瞬間に一瞬だけ文字が入ってその後すぐ消えてしまう。-->
 
           <ul v-for="memory in memoryList" class="tags">
-            <button @click.prevent="addTag()">{{ memory.tag }}</button>
+            <button @click.prevent="addTag()">{{ memory.tags }}</button>
           </ul>
 
           <p>
@@ -31,14 +31,24 @@
 
     <el-card class="box-card add-form">
       <!--<p>{{ memory.reviewedTimes }} / 6</p>-->
-      <div class="editor-tag">
-        <!--<p>-->
-        <input type="text" id="fixed-tag-input" class="fixed-tag-input" @input="addTag" spellcheck="false"
-               placeholder="タグを追加"/>
-        <!--</p>-->
-        <div>
+      <div class="tag-content-wrapper">
+        <div class="editor-tag">
+          <!--<p>-->
+          <input type="text" id="fixed-tag-input1" class="fixed-tag-input" spellcheck="false" v-model="memory.tag1"
+                 placeholder="タグ1を追加"/>
+          <input type="text" id="fixed-tag-input2" class="fixed-tag-input" spellcheck="false" v-model="memory.tag2"
+                 placeholder="タグ2を追加"/>
+          <input type="text" id="fixed-tag-input3" class="fixed-tag-input" spellcheck="false" v-model="memory.tag3"
+                 placeholder="タグ3を追加"/>
+          <input type="text" id="fixed-tag-input4" class="fixed-tag-input" spellcheck="false" v-model="memory.tag4"
+                 placeholder="タグ4を追加"/>
+          <input type="text" id="fixed-tag-input5" class="fixed-tag-input" spellcheck="false" v-model="memory.tag5"
+                 placeholder="タグ5を追加"/>
+          <!--</p>-->
+          <div>
           <textarea class="fixed-content" id="fixed-content" type="text" v-model="memory.content"
                     placeholder="本文を入力" :rows="rows" required/>
+          </div>
         </div>
       </div>
       <div class="tag-span-wrapper">
@@ -49,6 +59,7 @@
           {{ memory.tag }}
         </button>
       </div>
+      <input v-model="search"/>
 
       <!--<div class="tag-wrapper">-->
       <!--</div>-->
@@ -62,7 +73,7 @@
       <div class="clear-fix">
         <!--{{ memory.reviewedTimes }} / 6-->
         <!--内容:{{ memory.content }}-->
-        <div class="child-feed" v-for="memory in memoryList" v-if="memory.isToBeReviewedFlag">
+        <div class="child-feed" v-for="memory in filteredMemory" v-if="memory.isToBeReviewedFlag">
           <el-card class="box-card">
             <div class="buttons">
               <button @click="review(memory)">復習</button>
@@ -76,9 +87,7 @@
             <span>
             {{ memory.reviewedTimes }}回目
             </span>
-            <div class="feed">
-              {{ memory.content }}
-            </div>
+            <div class="feed">{{ memory.content }}</div>
             <div class="">
               <span class="tag-span" v-for="value in memory.tags">{{ value }}</span>
             </div>
@@ -103,7 +112,11 @@
           content: '',
           addedDate: '',
           tags: [],
-          tag: '',
+          tag1: '',
+          tag2: '',
+          tag3: '',
+          tag4: '',
+          tag5: '',
           isToBeReviewedFlag: true,
           isReviewFinishedFlag: false,
           reviewedDate: ''
@@ -113,6 +126,7 @@
         memoryList: [],
         availableTags: [],
         submitted: false,
+        search: '',
         isDisplayed: false // これを上のmemoryの中に入れていたら動かなかった。それは当然だ！上に入れていたら、それにアクセスするならmemory.isDisplayedにしないとダメだ。
       }
     },
@@ -122,6 +136,11 @@
       rows: function () {
         var num = this.memory.content.split("\n").length
         return (num > 4) ? num : 4
+      },
+      filteredMemory: function () {
+        return this.memoryList.filter((memory) => {
+          return memory.content.match(this.search)
+        })
       }
     },
     filters: {
@@ -156,7 +175,8 @@
           v.key = keys[i]  //  ここで上のmemoryListでは失われたkeyをmemoryのkeyに入れている。これにより、memoryにkeyを残すことに成功した。
         })
         console.log(this.memoryList)
-        this.memoryList = this.memoryList.slice().reverse()
+        // this.memoryList = this.data.body.slice().reverse()
+        // console.log(this.memoryList + '===')
       })
     },
     methods: {
@@ -168,20 +188,21 @@
       post() {
         var postButton = document.getElementById('fixed-post-button')
         postButton.disabled = true
-        var tempTag = []
-        tempTag = this.memory.tags.filter((e, i, self) => {
-          console.log('e => ' + e)
-          console.log('i => ' + i)
-          console.log('self => ' + self)
-          return self.indexOf(e) !== i
-        })
-        console.log(tempTag)
         if (this.blockMultiPostNum === 0) {
           this.blockMultiPostNum += 1
           let reviewedDay = new Date()
           let reviewedMonth = new Date().getMonth() + 1
-          this.memory.tags = this.tagCompletionList.filter((x, i, self) => {
+          this.memory.tags.push(this.memory.tag1)
+          this.memory.tags.push(this.memory.tag2)
+          this.memory.tags.push(this.memory.tag3)
+          this.memory.tags.push(this.memory.tag4)
+          this.memory.tags.push(this.memory.tag5)
+          console.log(this.memory.tag1)
+          this.memory.tags = this.memory.tags.filter((x, i, self) => {
             return self.indexOf(x) === i
+          })
+          this.memory.tags = this.memory.tags.filter((e) => { //  これで''を配列から削除できる
+            return e !== ''
           })
           // this.memory.tags = this.tagCompletionList
           this.memory.addedDate = (reviewedDay.getFullYear() + '/' + reviewedMonth + '/' + reviewedDay.getDate() + '/' + reviewedDay.getDay())//  これをpostのなかに入れたらnullになってしまった。then(dataのところで設定されているdataをpostするのだろうな。
@@ -190,6 +211,11 @@
             this.submitted = true
             this.memory.content = ''
             this.memory.tags = []
+            this.memory.tag1 = ''
+            this.memory.tag2 = ''
+            this.memory.tag3 = ''
+            this.memory.tag4 = ''
+            this.memory.tag5 = ''
             this.tagCompletionList = []
             this.isDisplayed = false
           })
@@ -355,8 +381,8 @@
   }
 
   .box-card {
-    width: 580px;
-    height: 300px;
+    width: 680px;
+    /*height: 300px;*/
     display: inline-block;
   }
 
@@ -385,8 +411,10 @@
   }
 
   .editor-tag {
-    position: absolute;
-    width: 400px;
+    /*position: absolute;*/
+    width: 600px;
+    margin-right: auto;
+    margin-left: auto;
   }
 
   .tag-span {
@@ -404,9 +432,10 @@
   }
 
   .fixed-tag-input {
-    color: transparent;
-    width: 530px;
+    /*color: transparent;*/
+    width: 100px;
     height: 35px;
+    margin-left: 6px;
     font-weight: 400;
     font-size: 1.1em;
     border: 1px solid #ccc;
@@ -434,10 +463,12 @@
     border-radius: 5px;
     border: 1px solid #ccc;
     margin-top: 30px;
-    width: 530px;
+    width: 600px;
     box-sizing: border-box;
     min-height: 100px;
     font-size: 1.1em;
+    padding-left: 6px;
+    padding-right: 6px;
     /*line-height: 30px;*/
   }
 
@@ -445,5 +476,9 @@
     position: absolute;
   }
 
+  .tag-content-wrapper {
+    width: 100%;
+
+  }
 
 </style>
