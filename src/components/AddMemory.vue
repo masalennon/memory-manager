@@ -139,7 +139,9 @@
       },
       filteredMemory: function () {
         return this.memoryList.filter((memory) => {
-          return memory.content.match(this.search)
+          console.log(memory.content)
+          console.log(memory.tag1)
+          return memory.tag1.match(this.search)
         })
       }
     },
@@ -180,11 +182,6 @@
       })
     },
     methods: {
-      filteredTags: () => {
-        this.memoryList.memory.tags = this.memoryList.memory.tags.filter((e, i, self) => {
-          return e !== '' && self.indexOf(e) === i
-        })
-      },
       post() {
         var postButton = document.getElementById('fixed-post-button')
         postButton.disabled = true
