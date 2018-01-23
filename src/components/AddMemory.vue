@@ -1,102 +1,128 @@
 <template>
   <div style="width: 1000px;">
-    <div class="add-memory">
-      <div class="add-button" v-if="isDisplayed">
-        <button @click="displayAddForm">閉じる</button>
-      </div>
-      <div class="add-button" v-else>
-        <button @click="displayAddForm">追加する</button>
-      </div>
-      <div v-if="isDisplayed">
-        <el-card class="box-card add-form">
-          メモの追加
-          {{ memory.reviewedTimes }} / 6
-          <textarea type="text" v-model="memory.content" required/>
+    <div class="center-content">
+      <div class="add-memory">
+        <!--<div class="add-button" v-if="isDisplayed">-->
+        <!--<button @click="displayAddForm">閉じる</button>-->
+        <!--</div>-->
+        <!--<div class="add-button" v-else>-->
+        <!--<button @click="displayAddForm">追加する</button>-->
+        <!--</div>-->
+        <div v-if="isDisplayed">
+          <el-card class="box-card add-form">
+            メモの追加
+            {{ memory.reviewedTimes }} / 6
+            <textarea type="text" v-model="memory.content" required/>
 
-          <!--<div class="tag-wrapper">-->
-          タグ:<input type="text" id="tag-input" v-model="memory.tag" v-on:keyup.enter="post" @input="addTag"/>
-          <!--</div>-->
-          <!--↑v-modelをつけるとボタンを押した瞬間に一瞬だけ文字が入ってその後すぐ消えてしまう。-->
+            <!--<div class="tag-wrapper">-->
+            タグ:<input type="text" id="tag-input" v-model="memory.tag" v-on:keyup.enter="post" @input="addTag"/>
+            <!--</div>-->
+            <!--↑v-modelをつけるとボタンを押した瞬間に一瞬だけ文字が入ってその後すぐ消えてしまう。-->
 
-          <ul v-for="memory in memoryList" class="tags">
-            <button @click.prevent="addTag()">{{ memory.tags }}</button>
-          </ul>
+            <ul v-for="memory in memoryList" class="tags">
+              <button @click.prevent="addTag()">{{ memory.tags }}</button>
+            </ul>
 
-          <p>
-            <button id="post-button" @click.prevent="post()">追加する</button>
-          </p>
-        </el-card>
-      </div>
-    </div>
-
-    <el-card class="box-card add-form">
-      <!--<p>{{ memory.reviewedTimes }} / 6</p>-->
-      <div class="tag-content-wrapper">
-        <div class="editor-tag">
-          <!--<p>-->
-          <input type="text" id="fixed-tag-input1" class="fixed-tag-input" spellcheck="false" v-model="memory.tag1"
-                 placeholder="タグ1を追加"/>
-          <input type="text" id="fixed-tag-input2" class="fixed-tag-input" spellcheck="false" v-model="memory.tag2"
-                 placeholder="タグ2を追加"/>
-          <input type="text" id="fixed-tag-input3" class="fixed-tag-input" spellcheck="false" v-model="memory.tag3"
-                 placeholder="タグ3を追加"/>
-          <input type="text" id="fixed-tag-input4" class="fixed-tag-input" spellcheck="false" v-model="memory.tag4"
-                 placeholder="タグ4を追加"/>
-          <input type="text" id="fixed-tag-input5" class="fixed-tag-input" spellcheck="false" v-model="memory.tag5"
-                 placeholder="タグ5を追加"/>
-          <!--</p>-->
-          <div>
-          <textarea class="fixed-content" id="fixed-content" type="text" v-model="memory.content"
-                    placeholder="本文を入力" :rows="rows" required/>
-          </div>
-        </div>
-      </div>
-      <div class="tag-span-wrapper">
-        <span class="tag-span" v-for="value in tagCompletionList">{{ value }}</span>
-      </div>
-      <div v-for="memory in memoryList" class="tags">
-        <button class="tag-button" @click.prevent="addTagByButton(memory.tag)">
-          {{ memory.tag }}
-        </button>
-      </div>
-      <input v-model="search"/>
-
-      <!--<div class="tag-wrapper">-->
-      <!--</div>-->
-      <!--↑v-modelをつけるとボタンを押した瞬間に一瞬だけ文字が入ってその後すぐ消えてしまう。-->
-
-      <div>
-        <button id="fixed-post-button" @click.prevent="post()">追加する</button>
-      </div>
-    </el-card>
-    <div id="parent-feed" class="parent-feed">
-      <div class="clear-fix">
-        <!--{{ memory.reviewedTimes }} / 6-->
-        <!--内容:{{ memory.content }}-->
-        <div class="child-feed" v-for="memory in filteredMemory" v-if="memory.isToBeReviewedFlag">
-          <el-card class="box-card">
-            <div class="buttons">
-              <button @click="review(memory)">復習</button>
-              <button @click="finishReview(memory)">復習終了</button>
-              <button @click="edit(memory)">編集</button>
-              <button @click="delet(memory)">削除</button>
-            </div>
-            <span>
-            {{ memory.addedDate }}〜
-            </span>
-            <span>
-            {{ memory.reviewedTimes }}回目
-            </span>
-            <div class="feed">{{ memory.content }}</div>
-            <div class="">
-              <span class="tag-span" v-for="value in memory.tags">{{ value }}</span>
-            </div>
+            <p>
+              <button id="post-button" @click.prevent="post()">追加する</button>
+            </p>
           </el-card>
         </div>
       </div>
-      <!--ちゃんと定義するのを忘れない。memoryはFor文の中だけだからいいがmemoryList needs to be defined properly inside data.-->
-      <!--content, addedDateなどは、AddMemory.vueで定義されていて、memoryの中にすでに入ってるものを取り出しているだけなので定義する必要がない。-->
+      <input type="checkbox" id="one" v-model="isEveryMemoryDisplayed">
+      <el-card class="box-card add-form">
+        <!--<p>{{ memory.reviewedTimes }} / 6</p>-->
+        <div class="tag-content-wrapper">
+          <div class="editor-tag">
+            <!--<p>-->
+            <input type="text" id="fixed-tag-input1" class="fixed-tag-input" spellcheck="false" v-model="memory.tag1"
+                   placeholder="タグ1を追加"/>
+            <input type="text" id="fixed-tag-input2" class="fixed-tag-input" spellcheck="false" v-model="memory.tag2"
+                   placeholder="タグ2を追加"/>
+            <input type="text" id="fixed-tag-input3" class="fixed-tag-input" spellcheck="false" v-model="memory.tag3"
+                   placeholder="タグ3を追加"/>
+            <input type="text" id="fixed-tag-input4" class="fixed-tag-input" spellcheck="false" v-model="memory.tag4"
+                   placeholder="タグ4を追加"/>
+            <input type="text" id="fixed-tag-input5" class="fixed-tag-input" spellcheck="false" v-model="memory.tag5"
+                   placeholder="タグ5を追加"/>
+            <!--</p>-->
+            <div>
+          <textarea class="fixed-content" id="fixed-content" type="text" v-model="memory.content"
+                    placeholder="本文を入力" :rows="rows" required/>
+            </div>
+          </div>
+        </div>
+        <div class="tag-span-wrapper">
+          <span class="tag-span" v-for="value in tagCompletionList">{{ value }}</span>
+        </div>
+        <div v-for="memory in memoryList" class="tags">
+          <button class="tag-button" @click.prevent="addTagByButton(memory.tag)">
+            {{ memory.tag }}
+          </button>
+        </div>
+        <div>
+          <button id="fixed-post-button" @click.prevent="post()">追加する</button>
+        </div>
+      </el-card>
+      <div v-if="isEveryMemoryDisplayed">
+        <div>
+          <input v-model="search"/>
+        </div>
+        <div id="parent-feed-every" class="parent-feed">
+          <div class="clear-fix">
+            <!--{{ memory.reviewedTimes }} / 6-->
+            <!--内容:{{ memory.content }}-->
+            <div class="child-feed" v-for="memory in filteredMemory" v-if="memory.isToBeReviewedFlag">
+              <el-card class="box-card">
+                <div class="buttons">
+                  <button @click="review(memory)">復習</button>
+                  <button @click="finishReview(memory)">復習終了</button>
+                  <button @click="edit(memory)">編集</button>
+                  <button @click="delet(memory)">削除</button>
+                </div>
+                <span>{{ memory.addedDate }}〜</span>
+                <span>{{ memory.reviewedTimes }}回目</span>
+                <div class="feed">{{ memory.content }}</div>
+                <div class="">
+                  <span class="tag-span" v-for="value in memory.tags">{{ value }}</span>
+                </div>
+              </el-card>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div v-else>
+        <div id="parent-feed-review" class="parent-feed">
+          <div class="clear-fix">
+            <!--{{ memory.reviewedTimes }} / 6-->
+            <!--内容:{{ memory.content }}-->
+            <div class="child-feed" v-for="memory in memoryList">
+            <el-card class="box-card">
+              <div class="buttons">
+                <button @click="review(memory)">復習</button>
+                <button @click="finishReview(memory)">復習終了</button>
+                <button @click="edit(memory)">編集</button>
+                <button @click="delet(memory)">削除</button>
+              </div>
+              <span>{{ memory.addedDate }}〜</span>
+              <span>{{ memory.reviewedTimes }}回目</span>
+              <div class="feed">{{ memory.content }}</div>
+              <div class="">
+                <span class="tag-span" v-for="value in memory.tags">{{ value }}</span>
+              </div>
+            </el-card>
+          </div>
+        </div>
+        </div>
+      </div>
     </div>
+    <!--<div class="tag-wrapper">-->
+    <!--</div>-->
+    <!--↑v-modelをつけるとボタンを押した瞬間に一瞬だけ文字が入ってその後すぐ消えてしまう。-->
+
+    <!--ちゃんと定義するのを忘れない。memoryはFor文の中だけだからいいがmemoryList needs to be defined properly inside data.-->
+    <!--content, addedDateなどは、AddMemory.vueで定義されていて、memoryの中にすでに入ってるものを取り出しているだけなので定義する必要がない。-->
+  </div>
   </div>
 </template>
 
@@ -126,6 +152,7 @@
         memoryList: [],
         availableTags: [],
         submitted: false,
+        isEveryMemoryDisplayed: false,
         search: '',
         isDisplayed: false // これを上のmemoryの中に入れていたら動かなかった。それは当然だ！上に入れていたら、それにアクセスするならmemory.isDisplayedにしないとダメだ。
       }
@@ -139,9 +166,9 @@
       },
       filteredMemory: function () {
         return this.memoryList.filter((memory) => {
-          console.log(memory.content)
-          console.log(memory.tag1)
-          return memory.tag1.match(this.search)
+          //  tag, contentで検索
+          return memory.content.match(this.search) || memory.tag1.match(this.search) || memory.tag2.match(this.search) ||
+            memory.tag3.match(this.search) || memory.tag4.match(this.search) || memory.tag5.match(this.search)
         })
       }
     },
@@ -234,10 +261,7 @@
       },
       delet(memory) {
         console.log('delete')
-        axios.delete('https://memory-manager-dd40d.firebaseio.com/posts' + memory.key + '.json', {
-          params:
-            {content: ''}
-        })
+        axios.delete('https://memory-manager-dd40d.firebaseio.com/posts/-L3MzG9HFyNTF0TtVpdH', this.memory)
         setTimeout(() => {
           axios.get('https://memory-manager-dd40d.firebaseio.com/posts.json').then(data => {
             // console.log(this)
@@ -333,10 +357,10 @@
   @import url("//unpkg.com/element-ui@2.0.7/lib/theme-chalk/index.css");
 
   .add-memory {
-    position: fixed;
-    width: 300px;
-    height: 300px;
-    left: 50px;
+    /*position: fixed;*/
+    /*width: 300px;*/
+    /*height: 300px;*/
+    /*left: 50px;*/
   }
 
   .add-form {
@@ -430,9 +454,10 @@
 
   .fixed-tag-input {
     /*color: transparent;*/
-    width: 100px;
+    width: 400px;
     height: 35px;
     margin-left: 6px;
+    margin-top: 5px;
     font-weight: 400;
     font-size: 1.1em;
     border: 1px solid #ccc;
@@ -476,6 +501,10 @@
   .tag-content-wrapper {
     width: 100%;
 
+  }
+  .center-content {
+    margin-left: auto;
+    margin-right: auto;
   }
 
 </style>
