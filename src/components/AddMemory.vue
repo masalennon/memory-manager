@@ -1,5 +1,5 @@
 <template>
-  <div style="width: 1000px;">
+  <div>
     <div class="center-content">
       <div class="add-memory">
         <!--<div class="add-button" v-if="isDisplayed">-->
@@ -68,6 +68,7 @@
         <div>
           <input v-model="search"/>
         </div>
+        <div>検索</div>
         <div id="parent-feed-every" class="parent-feed">
           <div class="clear-fix">
             <!--{{ memory.reviewedTimes }} / 6-->
@@ -121,7 +122,6 @@
     <!--ちゃんと定義するのを忘れない。memoryはFor文の中だけだからいいがmemoryList needs to be defined properly inside data.-->
     <!--content, addedDateなどは、AddMemory.vueで定義されていて、memoryの中にすでに入ってるものを取り出しているだけなので定義する必要がない。-->
   </div>
-  </div>
 </template>
 
 <script>
@@ -143,14 +143,15 @@
           tag5: '',
           isToBeReviewedFlag: true,
           isReviewFinishedFlag: true,
-          reviewedDate: ''
+          reviewedDate: '',
+          isDeletedFlag: false
         },
         tagCompletionList: [],
         blockMultiPostNum: 0,
         memoryList: [],
         availableTags: [],
         submitted: false,
-        isEveryMemoryDisplayed: true,
+        isEveryMemoryDisplayed: false,
         search: '',
         isDisplayed: false // これを上のmemoryの中に入れていたら動かなかった。それは当然だ！上に入れていたら、それにアクセスするならmemory.isDisplayedにしないとダメだ。
       }
@@ -402,8 +403,8 @@
 
   .box-card {
     width: 680px;
-    /*height: 300px;*/
-    display: inline-block;
+    margin-left: auto;
+    margin-right: auto;
   }
 
   .tags {
@@ -503,8 +504,7 @@
   }
 
   .center-content {
-    margin-left: auto;
-    margin-right: auto;
+    width: 800px;
   }
 
 </style>
