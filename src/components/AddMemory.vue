@@ -72,11 +72,9 @@
           <div class="clear-fix">
             <!--{{ memory.reviewedTimes }} / 6-->
             <!--内容:{{ memory.content }}-->
-            <div class="child-feed" v-for="memory in filteredMemory" v-if="memory.isToBeReviewedFlag">
+            <div class="child-feed" v-for="memory in filteredMemory">
               <el-card class="box-card">
                 <div class="buttons">
-                  <button @click="review(memory)">復習</button>
-                  <button @click="finishReview(memory)">復習終了</button>
                   <button @click="edit(memory)">編集</button>
                   <button @click="delet(memory)">削除</button>
                 </div>
@@ -96,23 +94,23 @@
           <div class="clear-fix">
             <!--{{ memory.reviewedTimes }} / 6-->
             <!--内容:{{ memory.content }}-->
-            <div class="child-feed" v-for="memory in memoryList">
-            <el-card class="box-card">
-              <div class="buttons">
-                <button @click="review(memory)">復習</button>
-                <button @click="finishReview(memory)">復習終了</button>
-                <button @click="edit(memory)">編集</button>
-                <button @click="delet(memory)">削除</button>
-              </div>
-              <span>{{ memory.addedDate }}〜</span>
-              <span>{{ memory.reviewedTimes }}回目</span>
-              <div class="feed">{{ memory.content }}</div>
-              <div class="">
-                <span class="tag-span" v-for="value in memory.tags">{{ value }}</span>
-              </div>
-            </el-card>
+            <div class="child-feed" v-for="memory in memoryList" v-if="memory.isToBeReviewedFlag">
+              <el-card class="box-card">
+                <div class="buttons">
+                  <button @click="review(memory)">復習</button>
+                  <button @click="finishReview(memory)">復習終了</button>
+                  <button @click="edit(memory)">編集</button>
+                  <button @click="delet(memory)">削除</button>
+                </div>
+                <span>{{ memory.addedDate }}〜</span>
+                <span>{{ memory.reviewedTimes }}回目</span>
+                <div class="feed">{{ memory.content }}</div>
+                <div class="">
+                  <span class="tag-span" v-for="value in memory.tags">{{ value }}</span>
+                </div>
+              </el-card>
+            </div>
           </div>
-        </div>
         </div>
       </div>
     </div>
@@ -144,7 +142,7 @@
           tag4: '',
           tag5: '',
           isToBeReviewedFlag: true,
-          isReviewFinishedFlag: false,
+          isReviewFinishedFlag: true,
           reviewedDate: ''
         },
         tagCompletionList: [],
@@ -152,7 +150,7 @@
         memoryList: [],
         availableTags: [],
         submitted: false,
-        isEveryMemoryDisplayed: false,
+        isEveryMemoryDisplayed: true,
         search: '',
         isDisplayed: false // これを上のmemoryの中に入れていたら動かなかった。それは当然だ！上に入れていたら、それにアクセスするならmemory.isDisplayedにしないとダメだ。
       }
@@ -275,6 +273,7 @@
         this.isDisplayed = !this.isDisplayed // ここ= isDisplayedにしていたら怒られてたけど、今思えば当たり前だ。isDisplayedはローカル変数になるししかもそれはこのメソッドでは定義されていない。
       },
       review(memory) {
+        console.log('review')
         let reviewedDate = new Date()
         let reviewedMonth = new Date().getMonth() + 1
         memory.reviewedTimes += 1  // thisのスコープはexport defaultの中。なしだと、reviewの中になる。
@@ -502,6 +501,7 @@
     width: 100%;
 
   }
+
   .center-content {
     margin-left: auto;
     margin-right: auto;
