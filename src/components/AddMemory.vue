@@ -7,6 +7,9 @@
       <div class="search-input" v-if="isEveryMemoryDisplayed">
         <input v-model="search" placeholder="タグ、本文を検索"/>
       </div>
+      <div>
+        {{ this.availableTags }}
+      </div>
     </div>
     <div class="title">
       <h1>MemoryFeed</h1>
@@ -144,7 +147,7 @@
         memory: {
           reviewedTimes: 0,
           content: '',
-          addedDate: moment(),
+          addedDate: moment().format('YYYY/MM/DD HH:mm'),
           tags: [],
           tag1: '',
           tag2: '',
@@ -200,9 +203,6 @@
     },
     filters: {},
     created() {
-      // this.availableTags = this.memory.tags.filter((x, i, self) => {
-      //   return self.indexOf(x) === i
-      // })
       axios.get('https://memory-manager-dd40d.firebaseio.com/posts.json').then(data => {
         console.log(data)
         console.log(this)
@@ -212,16 +212,17 @@
         this.memoryList = Object.values(data.data) //  ここのvaluesメソッドがkeyを消してindexに変えている。
         const keys = Object.keys(data.data) // ここをコメントアウトしないと配列が逆にならない。ここは配列。keysにオブジェクトのkeyを入れている。
         this.memoryList.forEach((v, i) => {
-          // this.availableTags = v.tags[i].concat()
           v.key = keys[i]  //  ここで上のmemoryListでは失われたkeyをmemoryのkeyに入れている。これにより、memoryにkeyを残すことに成功した。
+          this.availableTags.push(v.tags.filter((x, i, self) => {
+            return self.indexOf(x) === i
+          }))
           if (moment().diff(v.nextReviewDate, 'days') > 0) {
             v.isToBeReviewedFlag = true
-            console.log(v.isToBeReviewedFlag)
-            console.log(moment().diff(v.nextReviewDate, 'days'))
-            console.log('wjefajwofjaiowjjk')
           }
+          console.log(v.tags)
         })
       })
+      console.log(this.availableTags)
     },
     methods: {
       post() {
