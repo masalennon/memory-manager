@@ -1,7 +1,7 @@
 <template>
   <div id="app">
     <div class="parent-feed">
-      <memory-header></memory-header>
+      <!--<memory-header></memory-header>-->
       <add-memory></add-memory>
       <memory-feed></memory-feed>
     </div>
