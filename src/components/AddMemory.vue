@@ -18,22 +18,13 @@
       <hr/>
       <div class="center-content">
         <div class="add-memory">
-          <!--<div class="add-button" v-if="isDisplayed">-->
-          <!--<button @click="displayAddForm">閉じる</button>-->
-          <!--</div>-->
-          <!--<div class="add-button" v-else>-->
-          <!--<button @click="displayAddForm">追加する</button>-->
-          <!--</div>-->
           <div v-if="isDisplayed">
             <el-card class="box-card add-form">
               メモの追加
               {{ memory.reviewedTimes }} / 6
               <textarea type="text" v-model="memory.content" required/>
 
-              <!--<div class="tag-wrapper">-->
               タグ:<input type="text" id="tag-input" v-model="memory.tag" v-on:keyup.enter="post" @input="addTag"/>
-              <!--</div>-->
-              <!--↑v-modelをつけるとボタンを押した瞬間に一瞬だけ文字が入ってその後すぐ消えてしまう。-->
 
               <ul v-for="memory in memoryList" class="tags">
                 <button @click.prevent="addTag()">{{ memory.tags }}</button>
@@ -51,6 +42,10 @@
           <div class="tag-content-wrapper">
             <div class="editor-tag">
               <!--<p>-->
+              <div>
+                <textarea class="fixed-content" id="fixed-content" type="text" v-model="memory.content"
+                          v-focus placeholder="本文を入力" :rows="rows" required/>
+              </div>
               <input type="text" id="fixed-tag-input1" class="fixed-tag-input" spellcheck="false" v-model="memory.tag1"
                      placeholder="タグ1を追加"/>
               <input type="text" id="fixed-tag-input2" class="fixed-tag-input" spellcheck="false" v-model="memory.tag2"
@@ -62,10 +57,6 @@
               <input type="text" id="fixed-tag-input5" class="fixed-tag-input" spellcheck="false" v-model="memory.tag5"
                      placeholder="タグ5を追加"/>
               <!--</p>-->
-              <div>
-          <textarea class="fixed-content" id="fixed-content" type="text" v-model="memory.content"
-                    placeholder="本文を入力" :rows="rows" required/>
-              </div>
             </div>
           </div>
           <div class="tag-span-wrapper">
@@ -150,7 +141,7 @@
         memory: {
           reviewedTimes: 0,
           content: '',
-          addedDate: moment().format('YYYY/MM/DD HH:mm'),
+          addedDate: moment(),
           tags: [],
           tag1: '',
           tag2: '',
@@ -211,6 +202,20 @@
         })
       }
     },
+    watch: {
+      availableTags: () => {
+        this.$nextTick(() => {
+          this.availableTags = this.availableTags
+        })
+      }
+    },
+    directives: {
+      focus: {
+        inserted: function(el) {
+          el.focus()
+        }
+      }
+    },
     created() {
       axios.get('https://memory-manager-dd40d.firebaseio.com/posts.json').then(data => {
 
@@ -219,7 +224,8 @@
         this.memoryList.forEach((v, i) => {
           v.key = keys[i]
           // タグ履歴を追加。
-          for (i = 0; i < 5; i++) {
+          for (i = 0; i < v.tags.length; i++) {
+            console.log(v.tags[i])
             if (v.tags[i] !== '') {
               this.availableTags.push(v.tags[i])
             }
@@ -231,6 +237,8 @@
         this.availableTags = this.availableTags.filter((x, i, self) => {
           return self.indexOf(x) === i
         })
+        this.memoryList = Object.values(data.data)
+        this.memoryList = this.memoryList.slice().reverse()
       })
     },
     methods: {
@@ -239,8 +247,6 @@
         postButton.disabled = true
         if (this.blockMultiPostNum === 0) {
           this.blockMultiPostNum += 1
-
-
           this.memory.tags.push(this.memory.tag1)
           this.memory.tags.push(this.memory.tag2)
           this.memory.tags.push(this.memory.tag3)
@@ -253,7 +259,7 @@
           this.memory.tags = this.memory.tags.filter((e) => { //  これで''を配列から削除できる
             return e !== ''
           })
-          this.memory.addedDate = moment()
+          this.memory.addedDate = moment().format('YYYY/MM/DD HH:mm')
           this.memory.nextReviewDate = moment().add(1, 'days')
           axios.post('https://memory-manager-dd40d.firebaseio.com/posts.json', this.memory).then(data => {
             this.submitted = true
