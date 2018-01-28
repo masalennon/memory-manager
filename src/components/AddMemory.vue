@@ -110,6 +110,11 @@
                   <span>{{ memory.reviewedTimes }}回目</span>
                   <div class="feed">{{ memory.content }}</div>
                   <div class="">
+                    <!--<span class="tag-span" >{{ memory.tag1 }}</span>-->
+                    <!--<span class="tag-span" >{{ memory.tag2 }}</span>-->
+                    <!--<span class="tag-span" >{{ memory.tag3 }}</span>-->
+                    <!--<span class="tag-span" >{{ memory.tag4 }}</span>-->
+                    <!--<span class="tag-span" >{{ memory.tag5 }}</span>-->
                     <span class="tag-span" v-for="value in memory.tags">{{ value }}</span>
                   </div>
                 </el-card>
@@ -200,6 +205,9 @@
         this.availableTags.filter((x, i, self) => {
           return self.indexOf(x) === i
         })
+      },
+      setTags: () => {
+        // this.memory.tags
       }
     },
     watch: {
@@ -255,12 +263,13 @@
         postButton.disabled = true
         if (this.blockMultiPostNum === 0) {
           this.blockMultiPostNum += 1
-          // this.memory.tags.push(this.memory.tag1)
-          // this.memory.tags.push(this.memory.tag2)
-          // this.memory.tags.push(this.memory.tag3)
-          // this.memory.tags.push(this.memory.tag4)
-          // this.memory.tags.push(this.memory.tag5)
-          console.log(this.memory.tag1)
+          this.memory.tags.push(this.memory.tag1)
+          this.memory.tags.push(this.memory.tag2)
+          this.memory.tags.push(this.memory.tag3)
+          this.memory.tags.push(this.memory.tag4)
+          this.memory.tags.push(this.memory.tag5)
+          // ここに、tag4などだけに値が入っていたらtag1に入れる処理を入れればいい。
+          // console.log(this.memory.tag1)
           this.memory.tags = this.memory.tags.filter((x, i, self) => {
             return self.indexOf(x) === i
           })
