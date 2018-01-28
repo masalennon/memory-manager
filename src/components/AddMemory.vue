@@ -7,8 +7,10 @@
       <div class="search-input" v-if="isEveryMemoryDisplayed">
         <input v-model="search" placeholder="タグ、本文を検索"/>
       </div>
-      <div>
-        {{ this.availableTags }}
+      <div v-for="value in this.availableTags">
+        <span class="tag-list">
+          {{ value }}
+        </span>
       </div>
     </div>
     <div class="title">
@@ -139,6 +141,7 @@
   import axios from 'axios'
   import Firebase from 'firebase'
   import moment from 'moment'
+  import BootstrapVue from 'bootstrap-vue'
 
   export default {
     name: '',
@@ -201,11 +204,15 @@
         }
       }
     },
-    filters: {},
+    filters: {
+      excludeDuplicate: () => {
+        this.availableTags.filter((x, i, self) => {
+          return self.indexOf(x) === i
+        })
+      }
+    },
     created() {
       axios.get('https://memory-manager-dd40d.firebaseio.com/posts.json').then(data => {
-        console.log(data)
-        console.log(this)
         // this.memoryList = data.data これだとオブジェクトなので、配列として扱えない。なのでslice(), reverse()が使えなかった。
         // 配列にするために、Object.values(data.data)を使っている。
 
@@ -213,16 +220,20 @@
         const keys = Object.keys(data.data) // ここをコメントアウトしないと配列が逆にならない。ここは配列。keysにオブジェクトのkeyを入れている。
         this.memoryList.forEach((v, i) => {
           v.key = keys[i]  //  ここで上のmemoryListでは失われたkeyをmemoryのkeyに入れている。これにより、memoryにkeyを残すことに成功した。
-          this.availableTags.push(v.tags.filter((x, i, self) => {
-            return self.indexOf(x) === i
-          }))
+          // タグ履歴を追加。
+          for (i = 0; i < 5; i++) {
+            if (v.tags[i] !== '') {
+              this.availableTags.push(v.tags[i])
+            }
+          }
           if (moment().diff(v.nextReviewDate, 'days') > 0) {
             v.isToBeReviewedFlag = true
           }
-          console.log(v.tags)
+        })
+        this.availableTags = this.availableTags.filter((x, i, self) => {
+          return self.indexOf(x) === i
         })
       })
-      console.log(this.availableTags)
     },
     methods: {
       post() {
@@ -232,6 +243,7 @@
           this.blockMultiPostNum += 1
           // let reviewedMonth = new Date().getMonth() + 1
           // let today = reviewedDay.getFullYear().toString() + reviewedMonth.toString() + reviewedDay.getDate().toString()
+
           this.memory.tags.push(this.memory.tag1)
           this.memory.tags.push(this.memory.tag2)
           this.memory.tags.push(this.memory.tag3)
