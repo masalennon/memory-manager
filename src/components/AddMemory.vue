@@ -211,23 +211,31 @@
     },
     directives: {
       focus: {
-        inserted: function(el) {
+        inserted: function (el) {
           el.focus()
         }
       }
     },
     created() {
       axios.get('https://memory-manager-dd40d.firebaseio.com/posts.json').then(data => {
-
         this.memoryList = Object.values(data.data)
         const keys = Object.keys(data.data)
         this.memoryList.forEach((v, i) => {
           v.key = keys[i]
           // タグ履歴を追加。
-          for (i = 0; i < v.tags.length; i++) {
-            console.log(v.tags[i])
-            if (v.tags[i] !== '') {
-              this.availableTags.push(v.tags[i])
+          if (v.tag1 !== '') {
+            this.availableTags.push(v.tag1)
+            if (v.tag2 !== '') {
+              this.availableTags.push(v.tag2)
+              if (v.tag3 !== '') {
+                this.availableTags.push(v.tag3)
+                if (v.tag4 !== '') {
+                  this.availableTags.push(v.tag4)
+                  if (v.tag5 !== '') {
+                    this.availableTags.push(v.tag5)
+                  }
+                }
+              }
             }
           }
           if (moment().diff(v.nextReviewDate, 'days') > 0) {
@@ -247,11 +255,11 @@
         postButton.disabled = true
         if (this.blockMultiPostNum === 0) {
           this.blockMultiPostNum += 1
-          this.memory.tags.push(this.memory.tag1)
-          this.memory.tags.push(this.memory.tag2)
-          this.memory.tags.push(this.memory.tag3)
-          this.memory.tags.push(this.memory.tag4)
-          this.memory.tags.push(this.memory.tag5)
+          // this.memory.tags.push(this.memory.tag1)
+          // this.memory.tags.push(this.memory.tag2)
+          // this.memory.tags.push(this.memory.tag3)
+          // this.memory.tags.push(this.memory.tag4)
+          // this.memory.tags.push(this.memory.tag5)
           console.log(this.memory.tag1)
           this.memory.tags = this.memory.tags.filter((x, i, self) => {
             return self.indexOf(x) === i
@@ -287,7 +295,8 @@
         }
         postButton.disabled = false
         this.blockMultiPostNum = 0
-      },
+      }
+      ,
       delet(memory) {
         // ref = new Firebase("")
         console.log('delete')
@@ -299,11 +308,13 @@
             this.memoryList = this.memoryList.slice().reverse()
           })
         }, 800)
-      },
+      }
+      ,
       displayAddForm() {
         this.blockMultiPostNum = 0
         this.isDisplayed = !this.isDisplayed
-      },
+      }
+      ,
       review(memory) {
         console.log('review')
         memory.reviewedTimes += 1
@@ -334,18 +345,17 @@
         //  postする場所はパス構造になっている。
         axios.put('https://memory-manager-dd40d.firebaseio.com/posts/' + memory.key + '.json', memory).then(function (data) {
         })
-      },
+      }
+      ,
       finishReview(memory) {
         memory.isReviewFinishedFlag = true
-      },
+      }
+      ,
       edit(memory) {
         memory.isToBeEditedFlag = !memory.isToBeEditedFlag
-        console.log(memory.key)
-        let targetString = memory.tag
-        var separatorString = ' '
-        this.tagCompletionList = targetString.split(separatorString)
-        this.tagCompletionList = this.tag
-      },
+
+      }
+      ,
       addTag() {
         let targetString = document.getElementById('fixed-tag-input').value
         var separatorString = ' '
@@ -360,7 +370,8 @@
         })
 
         // console.log(this.tagCompletionList)
-      },
+      }
+      ,
       addTagByButton(tag) {
         console.log(tag)
         if (!this.tagCompletionList.includes(tag)) {
