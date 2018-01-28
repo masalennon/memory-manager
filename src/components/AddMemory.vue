@@ -170,7 +170,7 @@
         submitted: false,
         isEveryMemoryDisplayed: false,
         search: '',
-        isDisplayed: false // これを上のmemoryの中に入れていたら動かなかった。それは当然だ！上に入れていたら、それにアクセスするならmemory.isDisplayedにしないとダメだ。
+        isDisplayed: false
       }
     },
     computed: {
@@ -213,13 +213,11 @@
     },
     created() {
       axios.get('https://memory-manager-dd40d.firebaseio.com/posts.json').then(data => {
-        // this.memoryList = data.data これだとオブジェクトなので、配列として扱えない。なのでslice(), reverse()が使えなかった。
-        // 配列にするために、Object.values(data.data)を使っている。
 
-        this.memoryList = Object.values(data.data) //  ここのvaluesメソッドがkeyを消してindexに変えている。
-        const keys = Object.keys(data.data) // ここをコメントアウトしないと配列が逆にならない。ここは配列。keysにオブジェクトのkeyを入れている。
+        this.memoryList = Object.values(data.data)
+        const keys = Object.keys(data.data)
         this.memoryList.forEach((v, i) => {
-          v.key = keys[i]  //  ここで上のmemoryListでは失われたkeyをmemoryのkeyに入れている。これにより、memoryにkeyを残すことに成功した。
+          v.key = keys[i]
           // タグ履歴を追加。
           for (i = 0; i < 5; i++) {
             if (v.tags[i] !== '') {
@@ -241,8 +239,7 @@
         postButton.disabled = true
         if (this.blockMultiPostNum === 0) {
           this.blockMultiPostNum += 1
-          // let reviewedMonth = new Date().getMonth() + 1
-          // let today = reviewedDay.getFullYear().toString() + reviewedMonth.toString() + reviewedDay.getDate().toString()
+
 
           this.memory.tags.push(this.memory.tag1)
           this.memory.tags.push(this.memory.tag2)
@@ -256,10 +253,8 @@
           this.memory.tags = this.memory.tags.filter((e) => { //  これで''を配列から削除できる
             return e !== ''
           })
-          // this.memory.tags = this.tagCompletionList
-          this.memory.addedDate = moment()//  これをpostのなかに入れたらnullになってしまった。then(dataのところで設定されているdataをpostするのだろうな。
+          this.memory.addedDate = moment()
           this.memory.nextReviewDate = moment().add(1, 'days')
-          //  arrow関数を使えば、thisが上書きされない。arrow関数でない場合、下のaxios.postのところでselfにthisを代入しなければならなかったが、arrow関数を使えばその必要はない。
           axios.post('https://memory-manager-dd40d.firebaseio.com/posts.json', this.memory).then(data => {
             this.submitted = true
             this.memory.content = ''
@@ -274,12 +269,11 @@
           })
           setTimeout(() => {
             axios.get('https://memory-manager-dd40d.firebaseio.com/posts.json').then(data => {
-              this.memoryList = Object.values(data.data) //  ここのvaluesメソッドがkeyを消してindexに変えている。
-              const keys = Object.keys(data.data) // ここをコメントアウトしないと配列が逆にならない。ここは配列。keysにオブジェクトのkeyを入れている。
+              this.memoryList = Object.values(data.data)
+              const keys = Object.keys(data.data)
               this.memoryList.forEach((v, i) => {
-                v.key = keys[i]  //  ここで上のmemoryListでは失われたkeyをmemoryのkeyに入れている。これにより、memoryにkeyを残すことに成功した。
+                v.key = keys[i]
               })
-              // console.log(this)
               this.memoryList = Object.values(data.data)
               this.memoryList = this.memoryList.slice().reverse()
             })
@@ -287,8 +281,7 @@
         }
         postButton.disabled = false
         this.blockMultiPostNum = 0
-      }
-      ,
+      },
       delet(memory) {
         // ref = new Firebase("")
         console.log('delete')
@@ -300,16 +293,14 @@
             this.memoryList = this.memoryList.slice().reverse()
           })
         }, 800)
-      }
-      ,
+      },
       displayAddForm() {
         this.blockMultiPostNum = 0
-        this.isDisplayed = !this.isDisplayed // ここ= isDisplayedにしていたら怒られてたけど、今思えば当たり前だ。isDisplayedはローカル変数になるししかもそれはこのメソッドでは定義されていない。
-      }
-      ,
+        this.isDisplayed = !this.isDisplayed
+      },
       review(memory) {
         console.log('review')
-        memory.reviewedTimes += 1  // thisのスコープはexport defaultの中。なしだと、reviewの中になる。
+        memory.reviewedTimes += 1
         memory.isToBeReviewedFlag = false
         memory.reviewedDate = moment()
         switch (memory.reviewedTimes) {
@@ -337,12 +328,10 @@
         //  postする場所はパス構造になっている。
         axios.put('https://memory-manager-dd40d.firebaseio.com/posts/' + memory.key + '.json', memory).then(function (data) {
         })
-      }
-      ,
+      },
       finishReview(memory) {
         memory.isReviewFinishedFlag = true
-      }
-      ,
+      },
       edit(memory) {
         memory.isToBeEditedFlag = !memory.isToBeEditedFlag
         console.log(memory.key)
@@ -350,8 +339,7 @@
         var separatorString = ' '
         this.tagCompletionList = targetString.split(separatorString)
         this.tagCompletionList = this.tag
-      }
-      ,
+      },
       addTag() {
         let targetString = document.getElementById('fixed-tag-input').value
         var separatorString = ' '
@@ -366,8 +354,7 @@
         })
 
         // console.log(this.tagCompletionList)
-      }
-      ,
+      },
       addTagByButton(tag) {
         console.log(tag)
         if (!this.tagCompletionList.includes(tag)) {
