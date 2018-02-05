@@ -93,13 +93,15 @@
             </div>
           </div>
         </div>
+
         <div v-else>
           <div id="parent-feed-review" class="parent-feed">
             <div class="clear-fix">
               <!--{{ memory.reviewedTimes }} / 6-->
               <!--内容:{{ memory.content }}-->
-              <div class="child-feed" v-for="memory in memoryList" v-if="memory.isToBeReviewedFlag">
-                <el-card class="box-card">
+              <div class="child-feed" v-for="memory in memoryList"
+                   v-if="memory.isToBeReviewedFlag">
+                <el-card class="box-card" @click="editStart(memory)">
                   <div class="buttons">
                     <button @click="review(memory)">復習</button>
                     <button @click="finishReview(memory)">復習終了</button>
@@ -108,13 +110,18 @@
                   </div>
                   <span>{{ memory.addedDate }}〜</span>
                   <span>{{ memory.reviewedTimes }}回目</span>
-                  <div class="feed">{{ memory.content }}</div>
+                  <div v-if="memory.isToBeEditedFlag" class="feed">
+                    <textarea id="edit-textarea" v-model="memory.content" class="edit-form"/>
+                  </div>
+                  <div v-else class="feed"@click="editStart(memory)">{{ memory.content }}</div>
+                  <div v-if="memory.isToBeEditedFlag">
+                    <button @click="edit(memory)">done</button>
+                  </div>
+                  <div v-if="memory.isToBeEditedFlag">
+                    <button @click="editStop(memory)">suspend</button>
+                  </div>
+                  <!--ToBeEditedFlagを使って、trueならedit、falseならfinishEditのメソッドの内容が呼ばれるような一つのメソッドを作ればいい。-->
                   <div class="">
-                    <!--<span class="tag-span" >{{ memory.tag1 }}</span>-->
-                    <!--<span class="tag-span" >{{ memory.tag2 }}</span>-->
-                    <!--<span class="tag-span" >{{ memory.tag3 }}</span>-->
-                    <!--<span class="tag-span" >{{ memory.tag4 }}</span>-->
-                    <!--<span class="tag-span" >{{ memory.tag5 }}</span>-->
                     <span class="tag-span" v-for="value in memory.tags">{{ value }}</span>
                   </div>
                 </el-card>
@@ -122,8 +129,23 @@
             </div>
           </div>
         </div>
+        <div v-if="isShowModal">
+          <transition name="modal">
+            <div class="overlay" @click="isShowModal = false">
+              <div class="panel" @click.stop>
+                <h3>Modal</h3>
+                {{ }}
+                <button @click="isShowModal = false">閉じる</button>
+              </div>
+            </div>
+          </transition>
+        </div>
       </div>
     </div>
+    <!--<button @click="show">aaa</button>-->
+    <!--<modal name="hello-world">-->
+    <!--hello, world!-->
+    <!--</modal>-->
     <!--<div class="tag-wrapper">-->
     <!--</div>-->
     <!--↑v-modelをつけるとボタンを押した瞬間に一瞬だけ文字が入ってその後すぐ消えてしまう。-->
@@ -138,6 +160,7 @@
   import Firebase from 'firebase'
   import moment from 'moment'
   import BootstrapVue from 'bootstrap-vue'
+  import VModal from 'vue-js-modal'
 
   export default {
     name: '',
@@ -157,6 +180,7 @@
           isReviewFinishedFlag: true,
           reviewedDate: moment(),
           nextReviewDate: moment(),
+          isToBeEditedFlag: false,
           isDeletedFlag: false
         },
         tagCompletionList: [],
@@ -166,7 +190,10 @@
         submitted: false,
         isEveryMemoryDisplayed: false,
         search: '',
-        isDisplayed: false
+        isShowModal: false,
+        isDisplayed: false,
+        tempContent: '',
+        tempTag1: ''
       }
     },
     computed: {
@@ -210,16 +237,16 @@
         // this.memory.tags
       }
     },
-    watch: {
-      availableTags: () => {
-        this.$nextTick(() => {
-          this.availableTags = this.availableTags
-        })
-      }
-    },
+    // watch: {
+    //   availableTags: () => {
+    //     this.$nextTick(() => {
+    //       this.availableTags = this.availableTags
+    //     })
+    //   }
+    // },
     directives: {
       focus: {
-        inserted: function (el) {
+        bind: function (el) {
           el.focus()
         }
       }
@@ -258,6 +285,22 @@
       })
     },
     methods: {
+      doNothing() {
+
+      },
+      showModal() {
+        this.isShowModal = !this.isShowModal
+      },
+      focus(memory) {
+        memory.isToBeEditedFlag = !memory.isToBeEditedFlag
+        memory.content.focus()
+      },
+      show() {
+        VModal.show('hello-world');
+      },
+      hide() {
+        this.$modal.hide('hello-world');
+      },
       post() {
         var postButton = document.getElementById('fixed-post-button')
         postButton.disabled = true
@@ -354,17 +397,30 @@
         //  postする場所はパス構造になっている。
         axios.put('https://memory-manager-dd40d.firebaseio.com/posts/' + memory.key + '.json', memory).then(function (data) {
         })
-      }
-      ,
+      },
       finishReview(memory) {
-        memory.isReviewFinishedFlag = true
-      }
-      ,
+        memory.isToBeReviewedFlag = false
+        memory.reviewedTimes = 0
+      },
       edit(memory) {
-        memory.isToBeEditedFlag = !memory.isToBeEditedFlag
-
-      }
-      ,
+        console.log(memory.isToBeEditedFlag)
+        memory.isToBeEditedFlag = false
+        axios.put('https://memory-manager-dd40d.firebaseio.com/posts/' + memory.key + '.json', memory).then(function (data) {
+          console.log('edit put')
+        })
+      },
+      editStart(memory) {
+        console.log('aaa')
+        memory.isToBeEditedFlag = true
+      },
+      editStop(memory) {
+        axios.get('https://memory-manager-dd40d.firebaseio.com/posts.json').then(data => {
+          // console.log(this)
+          this.memoryList = Object.values(data.data)
+          this.memoryList = this.memoryList.slice().reverse()
+        })
+        memory.isToBeEditedFlag = false
+      },
       addTag() {
         let targetString = document.getElementById('fixed-tag-input').value
         var separatorString = ' '
@@ -379,8 +435,10 @@
         })
 
         // console.log(this.tagCompletionList)
-      }
-      ,
+      },
+      offReview(memory) {
+        memory.isToBeReviewedFlag = false
+      },
       addTagByButton(tag) {
         console.log(tag)
         if (!this.tagCompletionList.includes(tag)) {
@@ -519,8 +577,12 @@
   }
 
   .feed {
-    margin-top: 10px !important;
+    margin-top: 20px !important;
     min-height: 120px;
+    margin-left: auto;
+    margin-right: auto;
+    width: 620px;
+    margin-bottom: 30px;
     text-align: left;
     white-space: pre-wrap;
   }
@@ -574,4 +636,52 @@
     float: left;
   }
 
+  .overlay {
+    background: rgba(0, 0, 0, .8);
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 900;
+    transition: all .8s ease;
+  }
+
+  .panel {
+    width: 300px;
+    height: 200px;
+    background: #fff;
+    padding: 20px;
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    margin-left: -150px;
+    margin-top: -100px;
+    transition: all .3s ease;
+  }
+
+  .modal-enter,
+  .modal-leave-active {
+    opacity: 0;
+  }
+
+  .modal-enter .panel,
+  .modal-leave-active .panel {
+    top: -200px;
+  }
+
+  .edit-form {
+    min-height: 120px;
+    width: 100%;
+    font-size: 17px;
+    /*height: 100%;*/
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    -webkit-box-sizing: border-box;
+    box-sizing: border-box;
+    padding-left: 6px;
+    padding-right: 6px;
+  }
 </style>

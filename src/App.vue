@@ -4,6 +4,8 @@
       <!--<memory-header></memory-header>-->
       <add-memory></add-memory>
       <memory-feed></memory-feed>
+      <!--<button @click="showModal = true">モーダル表示</button>-->
+      <modal v-if="showModal" @close="showModal = false"></modal>
     </div>
   </div>
 </template>
@@ -12,13 +14,21 @@
   import AddMemory from './components/AddMemory.vue'
   import MemoryFeed from './components/MemoryFeed.vue'
   import MemoryHeader from './components/MemoryHeader.vue'
+  import Modal from './components/Modal.vue';
 
   export default {
     name: 'app',
+    data() {
+      return {
+        showModal: false
+      }
+    },
     components: {
+      Modal,
       'addMemory': AddMemory,
       'memoryFeed': MemoryFeed,
       'memory-header': MemoryHeader
+
     }
   }
 </script>
