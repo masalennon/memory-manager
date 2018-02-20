@@ -5,12 +5,16 @@
         <input type="checkbox" id="one" v-model="isEveryMemoryDisplayed">
       </div>
       <div class="search-input" v-if="isEveryMemoryDisplayed">
-        <input v-model="search" placeholder="タグ、本文を検索"/>
+        <input id="search-input" v-model="search" placeholder="タグ、本文を検索"/>
       </div>
       <div v-for="value in this.availableTags">
-        <span class="tag-list">
-          {{ value }}
-        </span>
+        <button @click="inputTag(value)" class="tag-list">
+          add to a tag
+        </button>
+        {{ value }}
+        <button @click="addToTag(value)" class="tag-list">
+          search
+        </button>
       </div>
     </div>
     <div class="title">
@@ -62,11 +66,12 @@
           <div class="tag-span-wrapper">
             <span class="tag-span" v-for="value in tagCompletionList">{{ value }}</span>
           </div>
-          <div v-for="memory in computeTagList" class="tags">
-            <button class="tag-button" @click.prevent="addTagByButton(memory.tag)">
-              {{ memory.tag1 }}
-            </button>
-          </div>
+          {{ memoryList.length }}
+          <!--<div v-for="memory in computeTagList" class="tags">-->
+            <!--<button class="tag-button" @click.prevent="addTagByButton(memory.tag)">-->
+              <!--{{ memory.tag1 }}-->
+            <!--</button>-->
+          <!--</div>-->
           <div>
             <button id="fixed-post-button" @click.prevent="post()">追加する</button>
           </div>
@@ -111,9 +116,9 @@
                   <span>{{ memory.addedDate }}〜</span>
                   <span>{{ memory.reviewedTimes }}回目</span>
                   <div v-if="memory.isToBeEditedFlag" class="feed">
-                    <textarea id="edit-textarea" v-model="memory.content" class="edit-form"/>
+                    <textarea :rows="row" id="edit-textarea" v-model="memory.content" class="edit-form"/>
                   </div>
-                  <div v-else class="feed"@click="editStart(memory)">{{ memory.content }}</div>
+                  <div v-else class="feed" @click="editStart(memory)">{{ memory.content }}</div>
                   <div v-if="memory.isToBeEditedFlag">
                     <button @click="edit(memory)">done</button>
                   </div>
@@ -185,7 +190,7 @@
         },
         tagCompletionList: [],
         blockMultiPostNum: 0,
-        memoryList: [],
+        memoryList: [], //meomryListに一気にmemory入れてそれからifでfilterするよりもisToBeReviewedMemoryListっていうのを作る方がいいと思う。計算量的に。
         availableTags: [],
         submitted: false,
         isEveryMemoryDisplayed: false,
@@ -193,6 +198,7 @@
         isShowModal: false,
         isDisplayed: false,
         tempContent: '',
+        row: '',
         tempTag1: ''
       }
     },
@@ -201,7 +207,7 @@
       },
       rows: function () {
         var num = this.memory.content.split("\n").length
-        return (num > 4) ? num : 4
+        return (num > 3) ? num : 4
       },
       filteredMemory: function () {
         return this.memoryList.filter((memory) => {
@@ -210,6 +216,9 @@
             memory.tag3.match(this.search) || memory.tag4.match(this.search) || memory.tag5.match(this.search)
         })
       },
+      // countMemories: () => {
+      //   return this.memoryList.length
+      // },
       computeTagList: () => {
         if (this.memoryList !== undefined) {
           console.log('taglist')
@@ -288,6 +297,25 @@
       doNothing() {
 
       },
+      inputTag(value) {
+        if (document.getElementById('fixed-tag-input1').value === '') {
+          this.memory.tag1 = value
+        } else if (document.getElementById('fixed-tag-input2').value === '') {
+          this.memory.tag2 = value
+        } else if (document.getElementById('fixed-tag-input3').value === '') {
+          this.memory.tag3 = value
+        } else if (document.getElementById('fixed-tag-input4').value === '') {
+          this.memory.tag4 = value
+        } else if (document.getElementById('fixed-tag-input5').value === '') {
+          this.memory.tag5 = value
+        }
+      },
+      addToTag (value) {
+        // document.getElementById('search-input').value = ''
+        // console.log(value)
+        // document.getElementById('search-input').value = value
+        this.search = value
+      },
       showModal() {
         this.isShowModal = !this.isShowModal
       },
@@ -311,6 +339,9 @@
           this.memory.tags.push(this.memory.tag3)
           this.memory.tags.push(this.memory.tag4)
           this.memory.tags.push(this.memory.tag5)
+          // if (this.memory.tags.length=0) {
+          //   this.memory.tags.push('temp')
+          // }
           // ここに、tag4などだけに値が入っていたらtag1に入れる処理を入れればいい。
           // console.log(this.memory.tag1)
           this.memory.tags = this.memory.tags.filter((x, i, self) => {
@@ -409,8 +440,10 @@
           console.log('edit put')
         })
       },
-      editStart(memory) {
-        console.log('aaa')
+      editStart (memory) {
+        var num = memory.content.split("\n").length
+        this.row = num
+        console.log(this.row)
         memory.isToBeEditedFlag = true
       },
       editStop(memory) {
