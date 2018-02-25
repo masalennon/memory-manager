@@ -4,9 +4,9 @@
       <div class="search-checkbox">
         <input type="checkbox" id="one" v-model="isEveryMemoryDisplayed">
       </div>
-      <div class="search-input" v-if="isEveryMemoryDisplayed">
-        <input id="search-input" v-model="search" placeholder="タグ、本文を検索"/>
-      </div>
+      <!--<div class="search-input" v-if="isEveryMemoryDisplayed">-->
+      <input id="search-input" v-model="search" placeholder="タグ、本文を検索"/>
+      <!--</div>-->
       <div v-for="value in this.availableTags">
         <button @click="inputTag(value)" class="tag-list">
           add to a tag
@@ -68,9 +68,9 @@
           </div>
           {{ memoryList.length }}
           <!--<div v-for="memory in computeTagList" class="tags">-->
-            <!--<button class="tag-button" @click.prevent="addTagByButton(memory.tag)">-->
-              <!--{{ memory.tag1 }}-->
-            <!--</button>-->
+          <!--<button class="tag-button" @click.prevent="addTagByButton(memory.tag)">-->
+          <!--{{ memory.tag1 }}-->
+          <!--</button>-->
           <!--</div>-->
           <div>
             <button id="fixed-post-button" @click.prevent="post()">追加する</button>
@@ -116,7 +116,7 @@
                   <span>{{ memory.addedDate }}〜</span>
                   <span>{{ memory.reviewedTimes }}回目</span>
                   <div v-if="memory.isToBeEditedFlag" class="feed">
-                    <textarea :rows="row" id="edit-textarea" v-model="memory.content" class="edit-form"/>
+                    <textarea :rows="rows" id="edit-textarea" v-model="memory.content" class="edit-form"/>
                   </div>
                   <div v-else class="feed" @click="editStart(memory)">{{ memory.content }}</div>
                   <div v-if="memory.isToBeEditedFlag">
@@ -205,8 +205,9 @@
     computed: {
       updatFeed: function () {
       },
-      rows: function () {
+      rows: function () { //これをcreatedとかに移動した方がいいのかも。編集するときにこれが動いてないっぽい。
         var num = this.memory.content.split("\n").length
+        console.log(num)
         return (num > 3) ? num : 4
       },
       filteredMemory: function () {
@@ -246,13 +247,13 @@
         // this.memory.tags
       }
     },
-    // watch: {
-    //   availableTags: () => {
-    //     this.$nextTick(() => {
-    //       this.availableTags = this.availableTags
-    //     })
-    //   }
-    // },
+    watch: {
+      //監視する変数の名前を最初に持ってくる。
+      search: function () {
+        console.log('aaa')
+        this.isEveryMemoryDisplayed = true
+      }
+    },
     directives: {
       focus: {
         bind: function (el) {
@@ -310,10 +311,7 @@
           this.memory.tag5 = value
         }
       },
-      addToTag (value) {
-        // document.getElementById('search-input').value = ''
-        // console.log(value)
-        // document.getElementById('search-input').value = value
+      addToTag(value) {
         this.search = value
       },
       showModal() {
@@ -422,7 +420,9 @@
             break
           case 6:
             memory.isReviewFinishedFlag = true
+            memory.isToBeReviewedFlag = false
             memory.nextReviewDate = ''
+            memory.reviewedTimes = 0
             break
         }
         //  postする場所はパス構造になっている。
@@ -431,6 +431,8 @@
       },
       finishReview(memory) {
         memory.isToBeReviewedFlag = false
+        memory.isReviewFinishedFlag = true
+        memory.nextReviewDate = ''
         memory.reviewedTimes = 0
       },
       edit(memory) {
@@ -440,7 +442,7 @@
           console.log('edit put')
         })
       },
-      editStart (memory) {
+      editStart(memory) {
         var num = memory.content.split("\n").length
         this.row = num
         console.log(this.row)
