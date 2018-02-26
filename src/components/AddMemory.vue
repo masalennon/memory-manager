@@ -283,7 +283,7 @@
               }
             }
           }
-          if (moment().diff(v.nextReviewDate, 'days') > 0) {
+          if (moment().diff(v.nextReviewDate, 'days') > 0 && v.isReviewFinishedFlag === false) {
             v.isToBeReviewedFlag = true
           }
         })
