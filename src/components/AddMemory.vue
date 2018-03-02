@@ -182,7 +182,7 @@
           tag4: '',
           tag5: '',
           isToBeReviewedFlag: true,
-          isReviewFinishedFlag: true,
+          isReviewFinishedFlag: false,
           reviewedDate: moment(),
           nextReviewDate: moment(),
           isToBeEditedFlag: false,
@@ -283,7 +283,7 @@
               }
             }
           }
-          if (moment().diff(v.nextReviewDate, 'days') > 0 && v.isReviewFinishedFlag === false) {
+          if (moment().diff(v.nextReviewDate, 'days') > 0) {
             v.isToBeReviewedFlag = true
           }
         })
@@ -368,11 +368,14 @@
               const keys = Object.keys(data.data)
               this.memoryList.forEach((v, i) => {
                 v.key = keys[i]
+                if (moment().diff(v.nextReviewDate, 'days') > 0 && v.isReviewFinishedFlag === false) {
+                  v.isToBeReviewedFlag = true
+                }
               })
               this.memoryList = Object.values(data.data)
               this.memoryList = this.memoryList.slice().reverse()
             })
-          }, 800)
+          }, 2000)
         }
         postButton.disabled = false
         this.blockMultiPostNum = 0
@@ -434,6 +437,9 @@
         memory.isReviewFinishedFlag = true
         memory.nextReviewDate = ''
         memory.reviewedTimes = 0
+        axios.put('https://memory-manager-dd40d.firebaseio.com/posts/' + memory.key + '.json', memory).then(function (data) {
+          console.log('finished review PUT')
+        })
       },
       edit(memory) {
         console.log(memory.isToBeEditedFlag)
