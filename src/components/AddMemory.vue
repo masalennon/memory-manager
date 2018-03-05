@@ -46,6 +46,7 @@
           <div class="tag-content-wrapper">
             <div class="editor-tag">
               <!--<p>-->
+
               <div>
                 <textarea class="fixed-content" id="fixed-content" type="text" v-model="memory.content"
                           v-focus placeholder="本文を入力" :rows="rows" required/>
@@ -116,7 +117,7 @@
                   <span>{{ memory.addedDate }}〜</span>
                   <span>{{ memory.reviewedTimes }}回目</span>
                   <div v-if="memory.isToBeEditedFlag" class="feed">
-                    <textarea :rows="rows" id="edit-textarea" v-model="memory.content" class="edit-form"/>
+                    <textarea :rows="editRows()" id="edit-textarea" v-model="memory.content" class="edit-form"/>
                   </div>
                   <div v-else class="feed" @click="editStart(memory)">{{ memory.content }}</div>
                   <div v-if="memory.isToBeEditedFlag">
@@ -208,7 +209,26 @@
       rows: function () { //これをcreatedとかに移動した方がいいのかも。編集するときにこれが動いてないっぽい。
         var num = this.memory.content.split("\n").length
         console.log(num)
-        return (num > 3) ? num : 4
+        var height = this.memory.content.length / 36
+        console.log(this.memory.content.length)
+        console.log('height = ' + height)
+        var returnNum = height + num
+        return (returnNum > 4) ? returnNum + 1 : 4
+      },
+      editRows: function () {
+        // これではダメだ。for文で回してるから同じid持った奴がたくさんできてしまう。どうすれば。。。
+        var num = document.getElementById('edit-textarea').value.split("\n").length
+        console.log(num)
+        var height = document.getElementById('edit-textarea').value.length / 36
+        console.log(document.getElementById('edit-textarea').length)
+        console.log('height = ' + height)
+        var returnNum = height + num
+        return (returnNum > 4) ? returnNum : 4
+      },
+      getHeight: function () {
+        // var height = this.memory.content.length % 36
+        // console.log(height)
+        // return (height > 2) ? height * 100 : 200
       },
       filteredMemory: function () {
         return this.memoryList.filter((memory) => {
@@ -252,6 +272,12 @@
       search: function () {
         console.log('aaa')
         this.isEveryMemoryDisplayed = true
+      },
+      isEveryMemoryDisplayed: () => {
+        if (!this.isEveryMemoryDisplayed) {
+          document.getElementById('one').innerText = ''
+          this.search = ''
+        }
       }
     },
     directives: {
@@ -337,19 +363,21 @@
           this.memory.tags.push(this.memory.tag3)
           this.memory.tags.push(this.memory.tag4)
           this.memory.tags.push(this.memory.tag5)
-          // if (this.memory.tags.length=0) {
-          //   this.memory.tags.push('temp')
-          // }
-          // ここに、tag4などだけに値が入っていたらtag1に入れる処理を入れればいい。
-          // console.log(this.memory.tag1)
+          // タグの重複を削除
           this.memory.tags = this.memory.tags.filter((x, i, self) => {
             return self.indexOf(x) === i
           })
+          // タグから空のものを削除
           this.memory.tags = this.memory.tags.filter((e) => { //  これで''を配列から削除できる
             return e !== ''
           })
+          // レビューの日にちを設定
           this.memory.addedDate = moment().format('YYYY/MM/DD HH:mm')
           this.memory.nextReviewDate = moment().add(1, 'days')
+
+          // contentの中のURLをリンク化
+          // var linkContent = this.memory.content.replace(/((http:|https:)\/\/[\x21-\x26\x28-\x7e]+)/gi, "<a href='$1'>$1</a>");
+          // this.memory.content = linkContent
           axios.post('https://memory-manager-dd40d.firebaseio.com/posts.json', this.memory).then(data => {
             this.submitted = true
             this.memory.content = ''
@@ -368,19 +396,39 @@
               const keys = Object.keys(data.data)
               this.memoryList.forEach((v, i) => {
                 v.key = keys[i]
-                if (moment().diff(v.nextReviewDate, 'days') > 0 && v.isReviewFinishedFlag === false) {
+                // タグ履歴を追加。
+                if (v.tag1 !== '') {
+                  this.availableTags.push(v.tag1)
+                  if (v.tag2 !== '') {
+                    this.availableTags.push(v.tag2)
+                    if (v.tag3 !== '') {
+                      this.availableTags.push(v.tag3)
+                      if (v.tag4 !== '') {
+                        this.availableTags.push(v.tag4)
+                        if (v.tag5 !== '') {
+                          this.availableTags.push(v.tag5)
+                        }
+                      }
+                    }
+                  }
+                }
+                // 今DBに入っているものの復讐が一通り終わったらコメントアウト外そう。現時点ではisReviewFinishedFlagないやつがあってうまくいかない。
+                // if (moment().diff(v.nextReviewDate, 'days') > 0 && v.isReviewFinishedFlag === false) {
+                if (moment().diff(v.nextReviewDate, 'days') > 0) {
                   v.isToBeReviewedFlag = true
                 }
+              })
+              this.availableTags = this.availableTags.filter((x, i, self) => {
+                return self.indexOf(x) === i
               })
               this.memoryList = Object.values(data.data)
               this.memoryList = this.memoryList.slice().reverse()
             })
-          }, 2000)
+          }, 1000)
         }
         postButton.disabled = false
         this.blockMultiPostNum = 0
-      }
-      ,
+      },
       delet(memory) {
         // ref = new Firebase("")
         console.log('delete')
@@ -633,6 +681,7 @@
   }
 
   .fixed-content {
+    /*overflow: auto;*/
     border-radius: 5px;
     border: 1px solid #ccc;
     margin-top: 30px;
