@@ -12,8 +12,10 @@ var config = {
   authDomain: 'memory-manager-dd40d.firebaseapp.com',
   databaseURL: 'https://memory-manager-dd40d.firebaseio.com/'
 }
-
 firebase.initializeApp(config)
+
+
+var database = firebase.database()
 
 /* eslint-disable no-new */
 new Vue({

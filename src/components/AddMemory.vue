@@ -112,12 +112,12 @@
                     <button @click="review(memory)">復習</button>
                     <button @click="finishReview(memory)">復習終了</button>
                     <button @click="edit(memory)">編集</button>
-                    <button @click="delet(memory)">削除</button>
+                    <button @click="onDeleted(memory)">削除</button>
                   </div>
                   <span>{{ memory.addedDate }}〜</span>
                   <span>{{ memory.reviewedTimes }}回目</span>
                   <div v-if="memory.isToBeEditedFlag" class="feed">
-                    <textarea :rows="editRows()" id="edit-textarea" v-model="memory.content" class="edit-form"/>
+                    <textarea id="edit-textarea" v-model="memory.content" class="edit-form"/>
                   </div>
                   <div v-else class="feed" @click="editStart(memory)">{{ memory.content }}</div>
                   <div v-if="memory.isToBeEditedFlag">
@@ -163,7 +163,7 @@
 
 <script>
   import axios from 'axios'
-  import Firebase from 'firebase'
+  import firebase from 'firebase'
   import moment from 'moment'
   import BootstrapVue from 'bootstrap-vue'
   import VModal from 'vue-js-modal'
@@ -336,6 +336,45 @@
         } else if (document.getElementById('fixed-tag-input5').value === '') {
           this.memory.tag5 = value
         }
+      },
+      onDeleted(memory) {
+        firebase.database().ref('posts/' + memory.key).remove()
+        setTimeout(() => {
+          axios.get('https://memory-manager-dd40d.firebaseio.com/posts.json').then(data => {
+            this.memoryList = Object.values(data.data)
+            const keys = Object.keys(data.data)
+            this.memoryList.forEach((v, i) => {
+              v.key = keys[i]
+              // タグ履歴を追加。
+              if (v.tag1 !== '') {
+                this.availableTags.push(v.tag1)
+                if (v.tag2 !== '') {
+                  this.availableTags.push(v.tag2)
+                  if (v.tag3 !== '') {
+                    this.availableTags.push(v.tag3)
+                    if (v.tag4 !== '') {
+                      this.availableTags.push(v.tag4)
+                      if (v.tag5 !== '') {
+                        this.availableTags.push(v.tag5)
+                      }
+                    }
+                  }
+                }
+              }
+              // 今DBに入っているものの復讐が一通り終わったらコメントアウト外そう。現時点ではisReviewFinishedFlagないやつがあってうまくいかない。
+              // if (moment().diff(v.nextReviewDate, 'days') > 0 && v.isReviewFinishedFlag === false) {
+              if (moment().diff(v.nextReviewDate, 'days') > 0) {
+                v.isToBeReviewedFlag = true
+              }
+            })
+            this.availableTags = this.availableTags.filter((x, i, self) => {
+              return self.indexOf(x) === i
+            })
+            this.memoryList = Object.values(data.data)
+            this.memoryList = this.memoryList.slice().reverse()
+          })
+        }, 1000)
+
       },
       addToTag(value) {
         this.search = value
